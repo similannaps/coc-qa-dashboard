@@ -7,6 +7,7 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 <style>
 :root{--tq:#33c0ca;--tq-d:#1f9aa3;--br:#b52324;--br-d:#961d1e;--bd:#e2e8f0;--tx:#334155}
@@ -30,24 +31,35 @@ body{font-family:'Prompt',sans-serif;background:#f1f5f9;color:var(--tx)}
 .kpi .v{font-size:2rem;font-weight:600;line-height:1.2}
 .ch{position:relative;height:340px}
 #msg{display:none}
+.btn-hd{border:1px solid #fff;color:#fff;background:transparent;border-radius:8px;font-weight:500}
+.btn-hd:hover,.btn-hd.show{background:rgba(255,255,255,.2);color:#fff;border-color:#fff}
+.mo{max-width:84px;flex:0 0 auto}.input-group>.form-control{min-width:0;border-top-right-radius:0;border-bottom-right-radius:0}
+.input-group>.mo{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:-1px}
+.print-only{display:none}
+@media print{.no-print,#msg{display:none!important}.print-only{display:block!important;margin-bottom:12px}
+body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.hero{padding:16px 0}.wrap{margin-top:0;padding-top:12px}.box{break-inside:avoid;box-shadow:none}}
 </style>
 </head>
 <body>
-<div class="hero"><div class="container-fluid px-4">
-  <h1>CoC QA Dashboard</h1>
-  <p>ผลงานทางวิชาการของอาจารย์ วิทยาลัยการคอมพิวเตอร์</p>
-</div></div>
+<div class="hero"><div class="container-fluid px-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
+  <div><h1>CoC QA Dashboard</h1><p>ผลงานทางวิชาการของอาจารย์ วิทยาลัยการคอมพิวเตอร์</p></div>
+  <div class="d-flex gap-2 no-print">
+    <div class="dropdown"><button class="btn btn-hd dropdown-toggle" data-bs-toggle="dropdown">ส่งออก</button>
+      <ul class="dropdown-menu dropdown-menu-end"><li><button class="dropdown-item" onclick="exportSummary()">สรุปเป็น CSV</button></li><li><button class="dropdown-item" onclick="exportRows()">รายการผลงานเป็น CSV</button></li><li><button class="dropdown-item" onclick="exportPdf()">บันทึกเป็น PDF</button></li></ul></div>
+    <button class="btn btn-hd" data-bs-toggle="modal" data-bs-target="#dataModal">จัดการข้อมูล</button>
+  </div></div></div>
 
 <div class="container-fluid px-4 wrap">
+  <p id="printInfo" class="print-only"></p>
   <div id="msg" class="alert alert-warning"></div>
 
-  <div class="box"><div class="box-b">
+  <div class="box no-print"><div class="box-b">
     <div class="row g-3 align-items-end">
-      <div class="col-6 col-md-2"><label class="form-label">ตั้งแต่ปี (ค.ศ.)</label><input type="number" id="startYear" class="form-control" placeholder="เช่น 2020"></div>
-      <div class="col-6 col-md-2"><label class="form-label">ถึงปี (ค.ศ.)</label><input type="number" id="endYear" class="form-control" placeholder="เช่น 2024"></div>
-      <div class="col-md-2"><label class="form-label">ชื่ออาจารย์</label><select id="staffF" class="form-select"><option value="All">-- ทุกคน --</option></select></div>
-      <div class="col-md-2"><label class="form-label">หลักสูตร</label><select id="progF" class="form-select"><option value="All">-- ทั้งหมด --</option></select></div>
-      <div class="col-md-2"><label class="form-label">ฐานข้อมูล (Indexing)</label><select id="idxF" class="form-select"><option value="All">-- ทั้งหมด --</option></select></div>
+      <div class="col-6 col-md-2"><label class="form-label" for="startYear">ตั้งแต่ปี (ค.ศ.)</label><div class="input-group"><input type="number" id="startYear" class="form-control" placeholder="เช่น 2020"><select id="startMonth" class="form-select mo" aria-label="เดือน"></select></div></div>
+      <div class="col-6 col-md-2"><label class="form-label" for="endYear">ถึงปี (ค.ศ.)</label><div class="input-group"><input type="number" id="endYear" class="form-control" placeholder="เช่น 2024"><select id="endMonth" class="form-select mo" aria-label="เดือน"></select></div></div>
+      <div class="col-md-2"><label class="form-label" for="staffF">ชื่ออาจารย์</label><select id="staffF" class="form-select"><option value="All">-- ทุกคน --</option></select></div>
+      <div class="col-md-2"><label class="form-label" for="progF">หลักสูตร</label><select id="progF" class="form-select"><option value="All">-- ทั้งหมด --</option></select></div>
+      <div class="col-md-2"><label class="form-label" for="idxF">ฐานข้อมูล (Indexing)</label><select id="idxF" class="form-select"><option value="All">-- ทั้งหมด --</option></select></div>
       <div class="col-md-2 d-flex gap-2">
         <button class="btn btn-c flex-fill" onclick="render()">ค้นหา</button>
         <button class="btn btn-o flex-fill" onclick="resetF()">ล้าง</button>
@@ -59,134 +71,199 @@ body{font-family:'Prompt',sans-serif;background:#f1f5f9;color:var(--tx)}
     <div class="col-6 col-lg-3"><div class="box kpi mb-0"><small>ผลงานทั้งหมด</small><div class="v" id="k1">0</div></div></div>
     <div class="col-6 col-lg-3"><div class="box kpi red mb-0"><small>จำนวนอาจารย์</small><div class="v" id="k2">0</div></div></div>
     <div class="col-6 col-lg-3"><div class="box kpi mb-0"><small>เฉลี่ยต่อคน</small><div class="v" id="k3">0</div></div></div>
-    <div class="col-6 col-lg-3"><div class="box kpi red mb-0"><small>ปีที่มีผลงานมากสุด</small><div class="v" id="k4">-</div></div></div>
+    <div class="col-6 col-lg-3"><div class="box kpi red mb-0"><small id="k4l">ปีที่มีผลงานมากสุด</small><div class="v" id="k4">-</div></div></div>
   </div>
 
   <div class="row g-3">
     <div class="col-lg-8"><div class="box h-100">
-      <div class="box-h">จำนวนผลงานรวมในแต่ละปี
-        <select id="groupBy" class="form-select form-select-sm w-auto">
+      <div class="box-h"><span id="yTitle">จำนวนผลงานรวมในแต่ละปี</span><select id="groupBy" class="form-select form-select-sm w-auto">
           <option value="none">ไม่แยก</option><option value="type">แยกตามประเภทผลงาน</option><option value="prog">แยกตามหลักสูตร</option>
         </select></div>
-      <div class="box-b"><div class="ch"><canvas id="yearChart"></canvas></div></div>
+      <div class="box-b"><div class="ch"><canvas id="yearChart" role="img" aria-label="กราฟแท่งจำนวนผลงานรายปี"></canvas></div></div>
     </div></div>
     <div class="col-lg-4"><div class="box h-100">
       <div class="box-h">สัดส่วนประเภทผลงาน</div>
-      <div class="box-b"><div class="ch"><canvas id="typeChart"></canvas></div></div>
+      <div class="box-b"><div class="ch"><canvas id="typeChart" role="img" aria-label="กราฟโดนัทสัดส่วนประเภทผลงาน"></canvas></div></div>
     </div></div>
     <div class="col-lg-6"><div class="box">
       <div class="box-h">จำนวนผลงานแยกตามหลักสูตร</div>
-      <div class="box-b"><div class="ch"><canvas id="progChart"></canvas></div></div>
+      <div class="box-b"><div class="ch"><canvas id="progChart" role="img" aria-label="กราฟแท่งผลงานแยกตามหลักสูตร"></canvas></div></div>
     </div></div>
     <div class="col-lg-6"><div class="box">
       <div class="box-h">Top 10 อาจารย์ที่มีผลงานมากสุด</div>
-      <div class="box-b"><div class="ch"><canvas id="staffChart"></canvas></div></div>
+      <div class="box-b"><div class="ch"><canvas id="staffChart" role="img" aria-label="กราฟแท่ง 10 อันดับอาจารย์"></canvas></div></div>
     </div></div>
   </div>
+  <div class="box"><div class="box-h"><span>เปรียบเทียบอาจารย์</span>
+    <div class="dropdown no-print"><button id="cmpBtn" class="btn btn-o dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside">เลือกอาจารย์ (0)</button>
+      <div class="dropdown-menu dropdown-menu-end p-2" id="cmpMenu" style="max-height:320px;overflow:auto;min-width:260px"></div></div></div>
+    <div class="box-b"><p id="cmpHint" class="mb-3" style="font-size:.875rem;color:#475569">เลือกอาจารย์ตั้งแต่ 2 คนขึ้นไปเพื่อเปรียบเทียบ (ใช้ตัวกรองช่วงเวลา หลักสูตร และฐานข้อมูลด้านบนร่วมด้วย)</p>
+      <div class="ch"><canvas id="cmpChart" role="img" aria-label="กราฟเปรียบเทียบผลงานของอาจารย์ที่เลือก"></canvas></div></div></div>
 </div>
 
+<div class="modal fade no-print" id="dataModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content" style="border-radius:14px">
+<div class="modal-header"><h2 class="modal-title fs-5">จัดการข้อมูล</h2><button class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button></div>
+<div class="modal-body">
+<div class="tab-content">
+<div class="tab-pane fade show active" id="tabOne"><div class="row g-3">
+<div class="col-6 col-md-4"><label class="form-label" for="aYear">ปี (ค.ศ.)</label><input type="number" id="aYear" class="form-control"></div>
+<div class="col-6 col-md-4"><label class="form-label" for="aMonth">เดือน</label><select id="aMonth" class="form-select"><option value="0">ไม่ระบุ</option><option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option></select></div>
+<div class="col-md-4"><label class="form-label" for="aStaff">ชื่ออาจารย์</label><input id="aStaff" class="form-control" list="dlStaff"></div>
+<div class="col-md-4"><label class="form-label" for="aProg">หลักสูตร</label><input id="aProg" class="form-control" list="dlProg"></div>
+<div class="col-md-4"><label class="form-label" for="aType">ประเภทผลงาน</label><input id="aType" class="form-control" list="dlType"></div>
+<div class="col-md-4"><label class="form-label" for="aIdx">ฐานข้อมูล (Indexing)</label><input id="aIdx" class="form-control" list="dlIdx"></div>
+</div><button class="btn btn-c mt-3 px-4" onclick="addOne()">บันทึก</button></div>
+</div><hr><label class="form-label" for="adminKey">รหัสผู้ดูแล</label><input type="password" id="adminKey" class="form-control" autocomplete="off">
+<p id="addStatus" class="mt-2 mb-0" style="font-size:.875rem" role="status"></p></div></div></div></div>
+<datalist id="dlStaff"></datalist><datalist id="dlProg"></datalist><datalist id="dlType"></datalist><datalist id="dlIdx"></datalist>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// ===== 1) Endpoint หลังบ้าน (Vercel Serverless Function) ไม่มีลิงก์ข้อมูลอยู่ในโค้ดนี้ =====
-const API_ENDPOINT = "/api/get-data";
 
-// ===== 2) ชื่อคอลัมน์ในชีต (ถ้าชื่อไม่ตรง ให้เพิ่มชื่อในวงเล็บ) =====
-const COL = {
-  year:  ['Year','ปี'],
-  staff: ['Staff name','ชื่ออาจารย์'],
-  index: ['Indexing','ฐานข้อมูล'],
-  type:  ['Type','ประเภท'],
-  prog:  ['Program','Curriculum','หลักสูตร','Major']
-};
+const API_ENDPOINT="/api/get-data",API_ADD="/api/add-data";
+const COL={year:['Year','ปี'],month:['Month','เดือน'],staff:['Staff name','ชื่ออาจารย์'],index:['Indexing','ฐานข้อมูล'],type:['Type','ประเภท'],prog:['Program','Curriculum','หลักสูตร','Major']};
 const PAL=['#33c0ca','#b52324','#f59e0b','#3b82f6','#10b981','#8b5cf6','#ec4899','#64748b'];
+const MTH=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const THF=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const THS=['มค','กพ','มีค','เมย','พค','มิย','กค','สค','กย','ตค','พย','ธค'],ENS=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+Chart.register(ChartDataLabels);
 Chart.defaults.font.family="'Prompt',sans-serif";
-
-let DATA=[], CH={};
+let DATA=[],CH={},IS_DEMO=false,HAS_M=false;const CMP=new Set();
 const $=id=>document.getElementById(id);
 const pick=(r,ns)=>{for(const n of ns){if(r[n]!==undefined&&String(r[n]).trim()!=='')return String(r[n]).trim()}return ''};
-
+const lum=h=>{const c=[1,3,5].map(i=>parseInt(h.substr(i,2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*c[0]+.7152*c[1]+.0722*c[2]};
+const lc=h=>lum(h)>.3?'#1e293b':'#ffffff';
+function parseMonth(v){v=String(v||'').trim().toLowerCase().replace(/[.\s]/g,'');if(!v)return 0;
+  if(/^\d{1,2}$/.test(v)){const n=+v;return n>=1&&n<=12?n:0}
+  let i=THS.indexOf(v);if(i<0)i=THF.findIndex(f=>f.startsWith(v));if(i<0)i=ENS.indexOf(v.slice(0,3));return i+1}
 function showMsg(t){$('msg').style.display='block';$('msg').textContent=t}
 function demo(){
   const T=['International Journal Articles','International Proceedings','National Journal Articles','National Proceedings'],
         P=['CS','IT','DSA','CYB'],S=['อ.สมชาย','อ.สมหญิง','อ.วิชัย','อ.มานี','อ.ปิติ'],I=['Scopus','TCI','WoS'],o=[];
-  for(let i=0;i<120;i++)o.push({year:2020+i%5,staff:S[i%5],index:I[i%3],type:T[(i*7)%4===3?2:i%2],prog:P[i%4]});
+  for(let i=0;i<120;i++)o.push({year:2020+i%5,month:1+(i*5)%12,staff:S[i%5],index:I[i%3],type:T[(i*7)%4===3?2:i%2],prog:P[i%4]});
   return o;
 }
 function normalize(rows){
-  if(rows.length&&Array.isArray(rows[0])){ // รองรับข้อมูลแบบ array ของ array (getValues)
-    const h=rows[0].map(x=>String(x).trim());
-    rows=rows.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]])));
-  }
+  if(rows.length&&Array.isArray(rows[0])){const h=rows[0].map(x=>String(x).trim());rows=rows.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]])))}
   return rows.map(x=>{let y=parseInt(pick(x,COL.year));if(y>2400)y-=543;
-    return{year:y,staff:pick(x,COL.staff),index:pick(x,COL.index),type:pick(x,COL.type),prog:pick(x,COL.prog)}})
+    return{year:y,month:parseMonth(pick(x,COL.month)),staff:pick(x,COL.staff),index:pick(x,COL.index),type:pick(x,COL.type),prog:pick(x,COL.prog)}})
     .filter(x=>x.year&&x.staff);
 }
 async function load(){
   try{
-    const res=await fetch(API_ENDPOINT);
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const text=await res.text();
-    let rows;
-    try{ // ลองอ่านเป็น JSON ก่อน ถ้าไม่ใช่ให้อ่านเป็น CSV
-      const j=JSON.parse(text);
-      if(typeof j!=='object')throw 0;
-      rows=Array.isArray(j)?j:(j.data||j.rows||[]);
-    }catch(_){
-      rows=Papa.parse(text,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
-    }
-    DATA=normalize(rows);
-    if(!DATA.length)throw new Error('empty');
-  }catch(err){
-    showMsg('โหลดข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ กำลังแสดงข้อมูลตัวอย่าง (ตรวจสอบการตั้งค่า GOOGLE_SHEET_API_URL บน Vercel)');
-    DATA=demo();
-  }
+    const res=await fetch(API_ENDPOINT);if(!res.ok)throw new Error('HTTP '+res.status);
+    const text=await res.text();let rows;
+    try{const j=JSON.parse(text);if(typeof j!=='object')throw 0;rows=Array.isArray(j)?j:(j.data||j.rows||[])}
+    catch(_){rows=Papa.parse(text,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data}
+    DATA=normalize(rows);if(!DATA.length)throw new Error('empty');
+  }catch(err){showMsg('โหลดข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ กำลังแสดงข้อมูลตัวอย่าง (ตรวจสอบการตั้งค่า GOOGLE_SHEET_API_URL บน Vercel)');IS_DEMO=true;DATA=demo()}
   start();
 }
-function fill(id,key){
-  const s=$(id);[...new Set(DATA.map(d=>d[key]))].filter(Boolean).sort().forEach(v=>s.add(new Option(v,v)));
+function fill(id,key){const s=$(id),v=s.value;s.length=1;[...new Set(DATA.map(d=>d[key]))].filter(Boolean).sort().forEach(x=>s.add(new Option(x,x)));if([...s.options].some(o=>o.value===v))s.value=v}
+function lists(){
+  [['dlStaff','staff'],['dlType','type'],['dlProg','prog'],['dlIdx','index']].forEach(([id,k])=>{const dl=$(id);dl.textContent='';
+    [...new Set(DATA.map(d=>d[k]))].filter(Boolean).sort().forEach(x=>{const o=document.createElement('option');o.value=x;dl.appendChild(o)})});
+  const m=$('cmpMenu');m.textContent='';
+  const c=document.createElement('button');c.type='button';c.className='btn btn-sm btn-o w-100 mb-2';c.textContent='ล้างที่เลือก';c.onclick=()=>{CMP.clear();lists();renderCmp()};m.appendChild(c);
+  [...new Set(DATA.map(d=>d.staff))].sort().forEach(n=>{const l=document.createElement('label'),i=document.createElement('input');
+    l.className='dropdown-item d-flex gap-2 align-items-center';i.type='checkbox';i.checked=CMP.has(n);
+    i.onchange=()=>{i.checked?CMP.add(n):CMP.delete(n);renderCmp()};l.append(i,document.createTextNode(n));m.appendChild(l)});
 }
-function start(){
-  fill('staffF','staff');fill('progF','prog');fill('idxF','index');
-  $('groupBy').addEventListener('input',render);
-  ['startYear','endYear'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')render()}));
+function refreshAll(){
+  fill('staffF','staff');fill('progF','prog');fill('idxF','index');lists();
+  HAS_M=DATA.some(d=>d.month);
+  ['startMonth','endMonth'].forEach(id=>{$(id).disabled=!HAS_M;$(id).title=HAS_M?'':'ข้อมูลยังไม่มีคอลัมน์ Month'});
   render();
 }
-function resetF(){['startYear','endYear'].forEach(i=>$(i).value='');['staffF','progF','idxF'].forEach(i=>$(i).value='All');render()}
-
+function start(){
+  ['startMonth','endMonth'].forEach(id=>{const s=$(id);s.add(new Option('เดือน',0));MTH.forEach((m,i)=>s.add(new Option(m,i+1)))});
+  $('groupBy').addEventListener('input',render);
+  ['startYear','endYear'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')render()}));
+  refreshAll();
+}
+function resetF(){['startYear','endYear'].forEach(i=>$(i).value='');['startMonth','endMonth'].forEach(i=>$(i).value=0);['staffF','progF','idxF'].forEach(i=>$(i).value='All');render()}
+function getF(skipStaff){
+  const s=+$('startYear').value||0,e=+$('endYear').value||9999,sm=+$('startMonth').value||0,em=+$('endMonth').value||12,
+        st=$('staffF').value,pg=$('progF').value,ix=$('idxF').value,a=s*12+sm,b=e*12+em;
+  return DATA.filter(d=>{const k=d.year*12+d.month;return k>=a&&k<=b&&(skipStaff||st==='All'||d.staff===st)&&(pg==='All'||d.prog===pg)&&(ix==='All'||d.index===ix)});
+}
+function axisInfo(){const s=+$('startYear').value,e=+$('endYear').value,bm=HAS_M&&s&&s===e;
+  return bm?{bm,key:d=>d.month,fmt:k=>k?MTH[k-1]:'ไม่ระบุ'}:{bm,key:d=>d.year,fmt:k=>k}}
 const count=(arr,key)=>arr.reduce((o,d)=>{const k=d[key]||'ไม่ระบุ';o[k]=(o[k]||0)+1;return o},{});
 function mk(id,cfg){if(CH[id])CH[id].destroy();CH[id]=new Chart($(id),cfg)}
+const FONT={weight:600,size:11};
 
 function render(){
-  const s=+$('startYear').value||0,e=+$('endYear').value||9999,
-        st=$('staffF').value,pg=$('progF').value,ix=$('idxF').value;
-  const f=DATA.filter(d=>d.year>=s&&d.year<=e&&(st==='All'||d.staff===st)&&(pg==='All'||d.prog===pg)&&(ix==='All'||d.index===ix));
-
-  const yc=count(f,'year'),years=Object.keys(yc).sort();
+  const f=getF(false),ax=axisInfo(),g=$('groupBy').value;
+  if(!f.length)showMsg('ไม่พบผลงานตามตัวกรองที่เลือก ลองขยายช่วงเวลาหรือกดล้าง');else if(!IS_DEMO)$('msg').style.display='none';
+  const keys=[...new Set(f.map(ax.key))].sort((a,b)=>a-b),labels=keys.map(ax.fmt),tot=keys.map(k=>f.filter(d=>ax.key(d)===k).length);
   const people=new Set(f.map(d=>d.staff)).size;
-  $('k1').textContent=f.length;$('k2').textContent=people;
-  $('k3').textContent=people?(f.length/people).toFixed(1):0;
-  $('k4').textContent=years.length?years.reduce((a,b)=>yc[a]>=yc[b]?a:b):'-';
-
-  // กราฟแท่งรายปี (แยกกลุ่มได้)
-  const g=$('groupBy').value;let ds;
-  if(g==='none')ds=[{label:'จำนวนผลงาน',data:years.map(y=>yc[y]),backgroundColor:PAL[0],borderRadius:6}];
-  else{const keys=[...new Set(f.map(d=>d[g]||'ไม่ระบุ'))].sort();
-    ds=keys.map((k,i)=>({label:k,backgroundColor:PAL[i%PAL.length],borderRadius:3,
-      data:years.map(y=>f.filter(d=>d.year==y&&(d[g]||'ไม่ระบุ')===k).length)}))}
-  mk('yearChart',{type:'bar',data:{labels:years,datasets:ds},options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:g!=='none',position:'bottom',labels:{usePointStyle:true}}},
+  $('k1').textContent=f.length;$('k2').textContent=people;$('k3').textContent=people?(f.length/people).toFixed(1):0;
+  $('k4').textContent=keys.length?ax.fmt(keys[tot.indexOf(Math.max(...tot))]):'-';
+  $('k4l').textContent=ax.bm?'เดือนที่มีผลงานมากสุด':'ปีที่มีผลงานมากสุด';
+  $('yTitle').textContent=ax.bm?'จำนวนผลงานรวมในแต่ละเดือน':'จำนวนผลงานรวมในแต่ละปี';
+  const o=x=>x.options[x.selectedIndex].text;
+  $('printInfo').textContent='ช่วงเวลา: '+($('startYear').value||'เริ่มต้น')+(+$('startMonth').value?' '+o($('startMonth')):'')+' ถึง '+($('endYear').value||'ล่าสุด')+(+$('endMonth').value?' '+o($('endMonth')):'')+' | อาจารย์: '+o($('staffF'))+' | หลักสูตร: '+o($('progF'))+' | ฐานข้อมูล: '+o($('idxF'));
+  let ds;
+  if(g==='none')ds=[{label:'จำนวนผลงาน',data:tot,backgroundColor:PAL[0],borderRadius:6,datalabels:{color:'#1e293b',anchor:'end',align:'end'}}];
+  else ds=[...new Set(f.map(d=>d[g]||'ไม่ระบุ'))].sort().map((k,i)=>{const c=PAL[i%PAL.length];
+    return{label:k,backgroundColor:c,borderRadius:3,data:keys.map(y=>f.filter(d=>ax.key(d)===y&&(d[g]||'ไม่ระบุ')===k).length),
+      datalabels:{color:lc(c),anchor:'center',align:'center',display:x=>x.dataset.data[x.dataIndex]>0}}});
+  const base={responsive:true,maintainAspectRatio:false,layout:{padding:{top:22,right:16}}};
+  mk('yearChart',{type:'bar',data:{labels,datasets:ds},options:{...base,plugins:{legend:{display:g!=='none',position:'bottom',labels:{usePointStyle:true}},datalabels:{font:FONT}},
     scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0},grid:{color:'#f1f5f9'}}}}});
-
   const tc=count(f,'type');
   mk('typeChart',{type:'doughnut',data:{labels:Object.keys(tc),datasets:[{data:Object.values(tc),backgroundColor:PAL,borderColor:'#fff',borderWidth:3}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true}}}}});
-
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true}},
+      datalabels:{font:FONT,color:x=>lc(PAL[x.dataIndex%PAL.length]),formatter:(v,x)=>{const t=x.dataset.data.reduce((a,b)=>a+b,0),p=Math.round(v/t*100);return p>=6?v+' ('+p+'%)':''}}}}});
   const pc=count(f,'prog');
-  mk('progChart',{type:'bar',data:{labels:Object.keys(pc),datasets:[{data:Object.values(pc),backgroundColor:PAL[1],borderRadius:6}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}});
-
+  mk('progChart',{type:'bar',data:{labels:Object.keys(pc),datasets:[{data:Object.values(pc),backgroundColor:PAL[1],borderRadius:6,datalabels:{color:'#1e293b',anchor:'end',align:'end'}}]},
+    options:{...base,plugins:{legend:{display:false},datalabels:{font:FONT}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}});
   const sc=Object.entries(count(f,'staff')).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  mk('staffChart',{type:'bar',data:{labels:sc.map(x=>x[0]),datasets:[{data:sc.map(x=>x[1]),backgroundColor:PAL[0],borderRadius:6}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{display:false}},x:{beginAtZero:true,ticks:{precision:0}}}}});
+  mk('staffChart',{type:'bar',data:{labels:sc.map(x=>x[0]),datasets:[{data:sc.map(x=>x[1]),backgroundColor:PAL[0],borderRadius:6,datalabels:{color:'#1e293b',anchor:'end',align:'end'}}]},
+    options:{...base,indexAxis:'y',layout:{padding:{right:28}},plugins:{legend:{display:false},datalabels:{font:FONT}},scales:{y:{grid:{display:false}},x:{beginAtZero:true,ticks:{precision:0}}}}});
+  renderCmp();
+}
+function renderCmp(){
+  const names=[...CMP],ax=axisInfo(),sub=getF(true).filter(d=>CMP.has(d.staff));
+  $('cmpBtn').textContent='เลือกอาจารย์ ('+names.length+')';
+  $('cmpHint').style.display=names.length<2?'block':'none';
+  const keys=[...new Set(sub.map(ax.key))].sort((a,b)=>a-b);
+  const ds=names.map((n,i)=>({label:n+' (รวม '+sub.filter(d=>d.staff===n).length+')',backgroundColor:PAL[i%PAL.length],borderRadius:3,
+    data:keys.map(k=>sub.filter(d=>d.staff===n&&ax.key(d)===k).length),
+    datalabels:{color:'#1e293b',anchor:'end',align:'end',display:x=>x.dataset.data[x.dataIndex]>0}}));
+  mk('cmpChart',{type:'bar',data:{labels:keys.map(ax.fmt),datasets:ds},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22,right:16}},
+    plugins:{legend:{position:'bottom',labels:{usePointStyle:true}},datalabels:{font:FONT}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0},grid:{color:'#f1f5f9'}}}}});
+}
+
+/* ===== ส่งออก ===== */
+const csvLine=r=>r.map(v=>{v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}).join(',');
+function dl(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/csv;charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function exportRows(){const f=getF(false);dl('publications.csv',[csvLine(['Year','Month','Staff name','Indexing','Type','Program']),...f.map(d=>csvLine([d.year,d.month||'',d.staff,d.index,d.type,d.prog]))].join('\n'))}
+function exportSummary(){const f=getF(false),L=[csvLine(['หัวข้อ','รายการ','จำนวนผลงาน'])];
+  [['ปี','year'],['ประเภทผลงาน','type'],['หลักสูตร','prog'],['ฐานข้อมูล','index'],['อาจารย์','staff']].forEach(([t,k])=>Object.entries(count(f,k)).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>L.push(csvLine([t,n,c]))));
+  dl('publications_summary.csv',L.join('\n'))}
+function exportPdf(){window.print()}
+
+/* ===== เพิ่มข้อมูล ===== */
+const canon=d=>({Year:d.year,Month:d.month||'','Staff name':d.staff,Indexing:d.index,Type:d.type,Program:d.prog});
+async function submit(list){
+  const st=$('addStatus'),key=$('adminKey').value;
+  if(!key){st.textContent='กรอกรหัสผู้ดูแลก่อน';return false}
+  st.textContent='กำลังบันทึก...';
+  try{
+    const r=await fetch(API_ADD,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,rows:list.map(canon)})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok){DATA=DATA.concat(list);refreshAll();st.textContent='บันทึกลง Google Sheet แล้ว '+list.length+' รายการ (ข้อมูลถาวรจะโหลดตามปกติในอีกไม่กี่นาที)';return true}
+    if(r.status===501){DATA=DATA.concat(list);refreshAll();st.textContent='ยังไม่ได้ตั้งค่าการเขียนชีต จึงเพิ่มข้อมูลชั่วคราวเฉพาะหน้านี้ (หายเมื่อรีเฟรช)';return true}
+    st.textContent=r.status===401?'รหัสผู้ดูแลไม่ถูกต้อง':'บันทึกไม่สำเร็จ: '+(j.error||r.status);
+  }catch(e){st.textContent='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'}
+  return false;
+}
+async function addOne(){
+  const y=+$('aYear').value,s=$('aStaff').value.trim();
+  if(!(y>=1990&&y<=2600)||!s){$('addStatus').textContent='กรอกปีและชื่ออาจารย์ให้ครบ';return}
+  const ok=await submit([{year:y>2400?y-543:y,month:+$('aMonth').value||0,staff:s,index:$('aIdx').value.trim(),type:$('aType').value.trim(),prog:$('aProg').value.trim()}]);
+  if(ok)$('aStaff').value='';
 }
 load();
 </script>
