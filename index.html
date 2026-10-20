@@ -148,20 +148,27 @@ function normalize(rows){
     return{year:y,month:parseMonth(pick(x,COL.month)),staff:pick(x,COL.staff),index:pick(x,COL.index),type:pick(x,COL.type),prog:pick(x,COL.prog)}})
     .filter(x=>x.year&&x.staff);
 }
+
+let authModal = null;
+function getPassKey() { return sessionStorage.getItem('user_passcode') || ''; }
+function showAuthModal() {
+  if (!authModal) authModal = new bootstrap.Modal(document.getElementById('userAuthModal'));
+  document.getElementById('userPassInput').value = '';
+  document.getElementById('userAuthErr').style.display = 'none';
+  authModal.show();
+}
+function submitUserPass() {
+  const val = document.getElementById('userPassInput').value.trim();
+  if (!val) return;
+  sessionStorage.setItem('user_passcode', val);
+  if (authModal) authModal.hide();
+  load();
+}
+
 async function load(){
+  const passKey = getPassKey();
   try{
-    let passKey = sessionStorage.getItem('user_passcode');
-    if (!passKey) {
-      passKey = prompt('🔒 กรุณากรอกรหัสผ่านสำหรับเข้าชมแดชบอร์ด (User Key):');
-      if (passKey) sessionStorage.setItem('user_passcode', passKey);
-    }
-    const res=await fetch(API_ENDPOINT + '?key=' + encodeURIComponent(passKey || ''));
-    if (res.status === 401) {
-      sessionStorage.removeItem('user_passcode');
-      alert('❌ รหัสผ่านเข้าชมไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
-      location.reload();
-      return;
-    }if(!res.ok)throw new Error('HTTP '+res.status);
+    if(!res.ok)throw new Error('HTTP '+res.status);
     const text=await res.text();let rows;
     try{const j=JSON.parse(text);if(typeof j!=='object')throw 0;rows=Array.isArray(j)?j:(j.data||j.rows||[])}
     catch(_){rows=Papa.parse(text,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data}
@@ -278,5 +285,29 @@ async function addOne(){
 }
 load();
 </script>
+
+<!-- Modal เข้าสู่ระบบสำหรับคนในองค์กร (User Key) -->
+<div class="modal fade no-print" id="userAuthModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+    <div class="modal-content" style="border-radius:18px; border:none; box-shadow:0 20px 40px rgba(15,23,42,0.22); background:#ffffff;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4 text-center d-block position-relative">
+        <div style="width:48px; height:48px; background:#fef2f2; color:#b52324; border-radius:14px; display:inline-flex; align-items:center; justify-content:center; font-size:1.4rem; margin-bottom:10px;">🔒</div>
+        <h5 class="modal-title fw-bold text-dark" style="font-size:1.2rem;">เข้าสู่ระบบ CoC Dashboard</h5>
+      </div>
+      <div class="modal-body px-4 py-3">
+        <p class="text-muted text-center small mb-3" style="font-size:0.85rem; line-height:1.4;">สงวนสิทธิ์การเข้าถึงเฉพาะบุคลากรที่ได้รับอนุญาต กรุณากรอกรหัสผ่านเพื่อเข้าชม</p>
+        <div class="mb-2">
+          <label class="form-label small fw-medium text-secondary" for="userPassInput">รหัสผ่านเข้าชม (User Key)</label>
+          <input type="password" id="userPassInput" class="form-control form-control-lg" placeholder="••••••••" style="font-size:1.1rem; letter-spacing:3px; border-radius:10px;" autocomplete="off" onkeydown="if(event.key==='Enter')submitUserPass()">
+        </div>
+        <div id="userAuthErr" class="text-danger small mt-2 text-center" style="display:none; font-size:0.85rem; font-weight:500;">❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</div>
+      </div>
+      <div class="modal-footer border-0 px-4 pb-4 pt-1">
+        <button type="button" class="btn btn-c w-100 py-2.5 fw-medium" style="border-radius:10px; font-size:0.95rem;" onclick="submitUserPass()">ยืนยันเข้าสู่ระบบ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
