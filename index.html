@@ -33,7 +33,7 @@ body{font-family:'Prompt',sans-serif;background:#f1f5f9;color:var(--tx)}
 #msg{display:none}
 .btn-hd{border:1px solid #fff;color:#fff;background:transparent;border-radius:8px;font-weight:500}
 .btn-hd:hover,.btn-hd.show{background:rgba(255,255,255,.2);color:#fff;border-color:#fff}
-.mo{max-width:84px;flex:0 0 auto}.input-group>.form-control{min-width:0;border-top-right-radius:0;border-bottom-right-radius:0}
+.mo{max-width:84px;flex:0 0 auto}.input-group>.form-select{min-width:0;border-top-right-radius:0;border-bottom-right-radius:0}
 .input-group>.mo{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:-1px}
 .print-only{display:none}
 @media print{.no-print,#msg{display:none!important}.print-only{display:block!important;margin-bottom:12px}
@@ -116,9 +116,31 @@ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.
 </div><hr><label class="form-label" for="adminKey">รหัสผู้ดูแล</label><input type="password" id="adminKey" class="form-control" autocomplete="off">
 <p id="addStatus" class="mt-2 mb-0" style="font-size:.875rem" role="status"></p></div></div></div></div>
 <datalist id="dlStaff"></datalist><datalist id="dlProg"></datalist><datalist id="dlType"></datalist><datalist id="dlIdx"></datalist>
+
+<div class="modal fade no-print" id="userAuthModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+    <div class="modal-content" style="border-radius:18px; border:none; box-shadow:0 20px 40px rgba(15,23,42,0.22); background:#ffffff;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4 text-center d-block position-relative">
+        <div style="width:48px; height:48px; background:#fef2f2; color:#b52324; border-radius:14px; display:inline-flex; align-items:center; justify-content:center; font-size:1.4rem; margin-bottom:10px;">🔒</div>
+        <h5 class="modal-title fw-bold text-dark" style="font-size:1.2rem;">เข้าสู่ระบบ CoC Dashboard</h5>
+      </div>
+      <div class="modal-body px-4 py-3">
+        <p class="text-muted text-center small mb-3" style="font-size:0.85rem; line-height:1.4;">สงวนสิทธิ์การเข้าถึงเฉพาะบุคลากรที่ได้รับอนุญาต กรุณากรอกรหัสผ่านเพื่อเข้าชม</p>
+        <div class="mb-2">
+          <label class="form-label small fw-medium text-secondary" for="userPassInput">รหัสผ่านเข้าชม (User Key)</label>
+          <input type="password" id="userPassInput" class="form-control form-control-lg" placeholder="••••••••" style="font-size:1.1rem; letter-spacing:3px; border-radius:10px;" autocomplete="off" onkeydown="if(event.key==='Enter')submitUserPass()">
+        </div>
+        <div id="userAuthErr" class="text-danger small mt-2 text-center" style="display:none; font-size:0.85rem; font-weight:500;">❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</div>
+      </div>
+      <div class="modal-footer border-0 px-4 pb-4 pt-1">
+        <button type="button" class="btn btn-c w-100 py-2.5 fw-medium" style="border-radius:10px; font-size:0.95rem;" onclick="submitUserPass()">ยืนยันเข้าสู่ระบบ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-
 const API_ENDPOINT="/api/get-data",API_ADD="/api/add-data";
 const COL={year:['Year','ปี'],month:['Month','เดือน'],staff:['Staff name','ชื่ออาจารย์'],index:['Indexing','ฐานข้อมูล'],type:['Type','ประเภท'],prog:['Program','Curriculum','หลักสูตร','Major']};
 const PAL=['#33c0ca','#b52324','#f59e0b','#3b82f6','#10b981','#8b5cf6','#ec4899','#64748b'];
@@ -127,7 +149,7 @@ const THF=['มกราคม','กุมภาพันธ์','มีนา�
 const THS=['มค','กพ','มีค','เมย','พค','มิย','กค','สค','กย','ตค','พย','ธค'],ENS=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 Chart.register(ChartDataLabels);
 Chart.defaults.font.family="'Prompt',sans-serif";
-let DATA=[],CH={},IS_DEMO=false,HAS_M=false;const CMP=new Set();
+let DATA=[],CH={},IS_DEMO=false,HAS_M=false,authModal=null;const CMP=new Set();
 const $=id=>document.getElementById(id);
 const pick=(r,ns)=>{for(const n of ns){if(r[n]!==undefined&&String(r[n]).trim()!=='')return String(r[n]).trim()}return ''};
 const lum=h=>{const c=[1,3,5].map(i=>parseInt(h.substr(i,2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*c[0]+.7152*c[1]+.0722*c[2]};
@@ -149,16 +171,16 @@ function normalize(rows){
     .filter(x=>x.year&&x.staff);
 }
 
-let authModal = null;
-function getPassKey() { return sessionStorage.getItem('user_passcode') || ''; }
 function showAuthModal() {
-  if (!authModal) authModal = new bootstrap.Modal(document.getElementById('userAuthModal'));
-  document.getElementById('userPassInput').value = '';
-  document.getElementById('userAuthErr').style.display = 'none';
-  authModal.show();
+  const el = $('userAuthModal');
+  if (el && typeof bootstrap !== 'undefined') {
+    if (!authModal) authModal = new bootstrap.Modal(el);
+    $('userPassInput').value = '';
+    authModal.show();
+  }
 }
 function submitUserPass() {
-  const val = document.getElementById('userPassInput').value.trim();
+  const val = $('userPassInput').value.trim();
   if (!val) return;
   sessionStorage.setItem('user_passcode', val);
   if (authModal) authModal.hide();
@@ -166,25 +188,26 @@ function submitUserPass() {
 }
 
 async function load(){
-  const passKey = getPassKey();
+  const passKey = sessionStorage.getItem('user_passcode') || '';
   try{
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const text=await res.text();let rows;
-    try{const j=JSON.parse(text);if(typeof j!=='object')throw 0;rows=Array.isArray(j)?j:(j.data||j.rows||[])}
-    catch(_){rows=Papa.parse(text,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data}
-    DATA=normalize(rows);if(!DATA.length)throw new Error('empty');
-  }catch(err){showMsg('โหลดข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ กำลังแสดงข้อมูลตัวอย่าง (ตรวจสอบการตั้งค่า GOOGLE_SHEET_API_URL บน Vercel)');IS_DEMO=true;DATA=demo()}
+    const url = API_ENDPOINT + (passKey ? '?key=' + encodeURIComponent(passKey) : '');
+    const res = await fetch(url);
+    if (res.status === 401) {
+      sessionStorage.removeItem('user_passcode');
+      showAuthModal();
+      $('userAuthErr').style.display = 'block';
+      return;
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text(); let rows;
+    try{const j = JSON.parse(text); if (typeof j !== 'object') throw 0; rows = Array.isArray(j) ? j : (j.data || j.rows || [])}
+    catch(_){rows = Papa.parse(text, {header:true, skipEmptyLines:true, transformHeader:h=>h.trim()}).data}
+    DATA = normalize(rows); if (!DATA.length) throw new Error('empty');
+  }catch(err){
+    showMsg('โหลดข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ กำลังแสดงข้อมูลตัวอย่าง (ตรวจสอบการตั้งค่า GOOGLE_SHEET_API_URL บน Vercel)');
+    IS_DEMO = true; DATA = demo();
+  }
   start();
-}
-function fill(id,key){const s=$(id),v=s.value;s.length=1;[...new Set(DATA.map(d=>d[key]))].filter(Boolean).sort().forEach(x=>s.add(new Option(x,x)));if([...s.options].some(o=>o.value===v))s.value=v}
-function lists(){
-  [['dlStaff','staff'],['dlType','type'],['dlProg','prog'],['dlIdx','index']].forEach(([id,k])=>{const dl=$(id);dl.textContent='';
-    [...new Set(DATA.map(d=>d[k]))].filter(Boolean).sort().forEach(x=>{const o=document.createElement('option');o.value=x;dl.appendChild(o)})});
-  const m=$('cmpMenu');m.textContent='';
-  const c=document.createElement('button');c.type='button';c.className='btn btn-sm btn-o w-100 mb-2';c.textContent='ล้างที่เลือก';c.onclick=()=>{CMP.clear();lists();renderCmp()};m.appendChild(c);
-  [...new Set(DATA.map(d=>d.staff))].sort().forEach(n=>{const l=document.createElement('label'),i=document.createElement('input');
-    l.className='dropdown-item d-flex gap-2 align-items-center';i.type='checkbox';i.checked=CMP.has(n);
-    i.onchange=()=>{i.checked?CMP.add(n):CMP.delete(n);renderCmp()};l.append(i,document.createTextNode(n));m.appendChild(l)});
 }
 
 function fillYears(){
@@ -198,17 +221,25 @@ function fillYears(){
   });
 }
 
+function fill(id,key){const s=$(id),v=s.value;s.length=1;[...new Set(DATA.map(d=>d[key]))].filter(Boolean).sort().forEach(x=>s.add(new Option(x,x)));if([...s.options].some(o=>o.value===v))s.value=v}
+function lists(){
+  [['dlStaff','staff'],['dlType','type'],['dlProg','prog'],['dlIdx','index']].forEach(([id,k])=>{const dl=$(id);dl.textContent='';
+    [...new Set(DATA.map(d=>d[k]))].filter(Boolean).sort().forEach(x=>{const o=document.createElement('option');o.value=x;dl.appendChild(o)})});
+  const m=$('cmpMenu');m.textContent='';
+  const c=document.createElement('button');c.type='button';c.className='btn btn-sm btn-o w-100 mb-2';c.textContent='ล้างที่เลือก';c.onclick=()=>{CMP.clear();lists();renderCmp()};m.appendChild(c);
+  [...new Set(DATA.map(d=>d.staff))].sort().forEach(n=>{const l=document.createElement('label'),i=document.createElement('input');
+    l.className='dropdown-item d-flex gap-2 align-items-center';i.type='checkbox';i.checked=CMP.has(n);
+    i.onchange=()=>{i.checked?CMP.add(n):CMP.delete(n);renderCmp()};l.append(i,document.createTextNode(n));m.appendChild(l)});
+}
 function refreshAll(){
-  fillYears();
-  fill('staffF','staff');fill('progF','prog');fill('idxF','index');lists();
+  fillYears();fill('staffF','staff');fill('progF','prog');fill('idxF','index');lists();
   HAS_M=DATA.some(d=>d.month);
   ['startMonth','endMonth'].forEach(id=>{$(id).disabled=!HAS_M;$(id).title=HAS_M?'':'ข้อมูลยังไม่มีคอลัมน์ Month'});
   render();
 }
 function start(){
-  ['startMonth','endMonth'].forEach(id=>{const s=$(id);s.add(new Option('เดือน',0));MTH.forEach((m,i)=>s.add(new Option(m,i+1)))});
+  ['startMonth','endMonth'].forEach(id=>{const s=$(id);if(s.options.length<=1){s.add(new Option('เดือน',0));MTH.forEach((m,i)=>s.add(new Option(m,i+1)))}});
   $('groupBy').addEventListener('input',render);
-  ['startYear','endYear'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')render()}));
   refreshAll();
 }
 function resetF(){['startYear','endYear'].forEach(i=>$(i).value='');['startMonth','endMonth'].forEach(i=>$(i).value=0);['staffF','progF','idxF'].forEach(i=>$(i).value='All');render()}
@@ -266,7 +297,6 @@ function renderCmp(){
     plugins:{legend:{position:'bottom',labels:{usePointStyle:true}},datalabels:{font:FONT}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0},grid:{color:'#f1f5f9'}}}}});
 }
 
-/* ===== ส่งออก ===== */
 const csvLine=r=>r.map(v=>{v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}).join(',');
 function dl(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/csv;charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function exportRows(){const f=getF(false);dl('publications.csv',[csvLine(['Year','Month','Staff name','Indexing','Type','Program']),...f.map(d=>csvLine([d.year,d.month||'',d.staff,d.index,d.type,d.prog]))].join('\n'))}
@@ -275,7 +305,6 @@ function exportSummary(){const f=getF(false),L=[csvLine(['หัวข้อ','�
   dl('publications_summary.csv',L.join('\n'))}
 function exportPdf(){window.print()}
 
-/* ===== เพิ่มข้อมูล ===== */
 const canon=d=>({Year:d.year,Month:d.month||'','Staff name':d.staff,Indexing:d.index,Type:d.type,Program:d.prog});
 async function submit(list){
   const st=$('addStatus'),key=$('adminKey').value;
@@ -284,8 +313,8 @@ async function submit(list){
   try{
     const r=await fetch(API_ADD,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,rows:list.map(canon)})});
     const j=await r.json().catch(()=>({}));
-    if(r.ok){DATA=DATA.concat(list);refreshAll();st.textContent='บันทึกลง Google Sheet แล้ว '+list.length+' รายการ (ข้อมูลถาวรจะโหลดตามปกติในอีกไม่กี่นาที)';return true}
-    if(r.status===501){DATA=DATA.concat(list);refreshAll();st.textContent='ยังไม่ได้ตั้งค่าการเขียนชีต จึงเพิ่มข้อมูลชั่วคราวเฉพาะหน้านี้ (หายเมื่อรีเฟรช)';return true}
+    if(r.ok){DATA=DATA.concat(list);refreshAll();st.textContent='บันทึกลง Google Sheet แล้ว '+list.length+' รายการ';return true}
+    if(r.status===501){DATA=DATA.concat(list);refreshAll();st.textContent='เพิ่มข้อมูลชั่วคราวเฉพาะหน้านี้';return true}
     st.textContent=r.status===401?'รหัสผู้ดูแลไม่ถูกต้อง':'บันทึกไม่สำเร็จ: '+(j.error||r.status);
   }catch(e){st.textContent='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'}
   return false;
@@ -298,29 +327,5 @@ async function addOne(){
 }
 load();
 </script>
-
-<!-- Modal เข้าสู่ระบบสำหรับคนในองค์กร (User Key) -->
-<div class="modal fade no-print" id="userAuthModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
-    <div class="modal-content" style="border-radius:18px; border:none; box-shadow:0 20px 40px rgba(15,23,42,0.22); background:#ffffff;">
-      <div class="modal-header border-0 pb-0 pt-4 px-4 text-center d-block position-relative">
-        <div style="width:48px; height:48px; background:#fef2f2; color:#b52324; border-radius:14px; display:inline-flex; align-items:center; justify-content:center; font-size:1.4rem; margin-bottom:10px;">🔒</div>
-        <h5 class="modal-title fw-bold text-dark" style="font-size:1.2rem;">เข้าสู่ระบบ CoC Dashboard</h5>
-      </div>
-      <div class="modal-body px-4 py-3">
-        <p class="text-muted text-center small mb-3" style="font-size:0.85rem; line-height:1.4;">สงวนสิทธิ์การเข้าถึงเฉพาะบุคลากรที่ได้รับอนุญาต กรุณากรอกรหัสผ่านเพื่อเข้าชม</p>
-        <div class="mb-2">
-          <label class="form-label small fw-medium text-secondary" for="userPassInput">รหัสผ่านเข้าชม (User Key)</label>
-          <input type="password" id="userPassInput" class="form-control form-control-lg" placeholder="••••••••" style="font-size:1.1rem; letter-spacing:3px; border-radius:10px;" autocomplete="off" onkeydown="if(event.key==='Enter')submitUserPass()">
-        </div>
-        <div id="userAuthErr" class="text-danger small mt-2 text-center" style="display:none; font-size:0.85rem; font-weight:500;">❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</div>
-      </div>
-      <div class="modal-footer border-0 px-4 pb-4 pt-1">
-        <button type="button" class="btn btn-c w-100 py-2.5 fw-medium" style="border-radius:10px; font-size:0.95rem;" onclick="submitUserPass()">ยืนยันเข้าสู่ระบบ</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
