@@ -76,9 +76,7 @@ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.
 
   <div class="row g-3">
     <div class="col-lg-8"><div class="box h-100">
-      <div class="box-h"><span id="yTitle">จำนวนผลงานรวมในแต่ละปี</span><select id="groupBy" class="form-select form-select-sm w-auto">
-          <option value="none">ไม่แยก</option><option value="type">แยกตามประเภทผลงาน</option><option value="prog">แยกตามหลักสูตร</option>
-        </select></div>
+      <div class="box-h"><span id="yTitle">จำนวนผลงานรวมในแต่ละปี</span><select id="groupBy" class="form-select form-select-sm w-auto"><option value="none">ไม่แยก</option><option value="type">แยกตามประเภทผลงาน</option><option value="prog">แยกตามหลักสูตร</option></select></div>
       <div class="box-b"><div class="ch"><canvas id="yearChart" role="img" aria-label="กราฟแท่งจำนวนผลงานรายปี"></canvas></div></div>
     </div></div>
     <div class="col-lg-4"><div class="box h-100">
@@ -97,43 +95,48 @@ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.
   <div class="box"><div class="box-h"><span>เปรียบเทียบอาจารย์</span>
     <div class="dropdown no-print"><button id="cmpBtn" class="btn btn-o dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside">เลือกอาจารย์ (0)</button>
       <div class="dropdown-menu dropdown-menu-end p-2" id="cmpMenu" style="max-height:320px;overflow:auto;min-width:260px"></div></div></div>
-    <div class="box-b"><p id="cmpHint" class="mb-3" style="font-size:.875rem;color:#475569">เลือกอาจารย์ตั้งแต่ 2 คนขึ้นไปเพื่อเปรียบเทียบ (ใช้ตัวกรองช่วงเวลา หลักสูตร และฐานข้อมูลด้านบนร่วมด้วย)</p>
-      <div class="ch"><canvas id="cmpChart" role="img" aria-label="กราฟเปรียบเทียบผลงานของอาจารย์ที่เลือก"></canvas></div></div></div>
+    <div class="box-b"><p id="cmpHint" class="mb-3" style="font-size:.875rem;color:#475569">เลือกอาจารย์ตั้งแต่ 2 คนขึ้นไปเพื่อเปรียบเทียบ</p>
+      <div class="ch"><canvas id="cmpChart" role="img" aria-label="กราฟเปรียบเทียบผลงาน"></canvas></div></div></div>
 </div>
 
+<!-- Modal จัดการข้อมูล -->
 <div class="modal fade no-print" id="dataModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content" style="border-radius:14px">
 <div class="modal-header"><h2 class="modal-title fs-5">จัดการข้อมูล</h2><button class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button></div>
 <div class="modal-body">
-<div class="tab-content">
-<div class="tab-pane fade show active" id="tabOne"><div class="row g-3">
+<div class="tab-content"><div class="tab-pane fade show active" id="tabOne"><div class="row g-3">
 <div class="col-6 col-md-4"><label class="form-label" for="aYear">ปี (ค.ศ.)</label><input type="number" id="aYear" class="form-control"></div>
 <div class="col-6 col-md-4"><label class="form-label" for="aMonth">เดือน</label><select id="aMonth" class="form-select"><option value="0">ไม่ระบุ</option><option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option><option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option><option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option></select></div>
 <div class="col-md-4"><label class="form-label" for="aStaff">ชื่ออาจารย์</label><input id="aStaff" class="form-control" list="dlStaff"></div>
 <div class="col-md-4"><label class="form-label" for="aProg">หลักสูตร</label><input id="aProg" class="form-control" list="dlProg"></div>
 <div class="col-md-4"><label class="form-label" for="aType">ประเภทผลงาน</label><input id="aType" class="form-control" list="dlType"></div>
 <div class="col-md-4"><label class="form-label" for="aIdx">ฐานข้อมูล (Indexing)</label><input id="aIdx" class="form-control" list="dlIdx"></div>
-</div><button class="btn btn-c mt-3 px-4" onclick="addOne()">บันทึก</button></div>
-</div><hr><label class="form-label" for="adminKey">รหัสผู้ดูแล</label><input type="password" id="adminKey" class="form-control" autocomplete="off">
+</div><button class="btn btn-c mt-3 px-4" onclick="addOne()">บันทึก</button></div></div><hr>
+<label class="form-label" for="adminKey">รหัสผู้ดูแล</label><input type="password" id="adminKey" class="form-control" autocomplete="off">
 <p id="addStatus" class="mt-2 mb-0" style="font-size:.875rem" role="status"></p></div></div></div></div>
 <datalist id="dlStaff"></datalist><datalist id="dlProg"></datalist><datalist id="dlType"></datalist><datalist id="dlIdx"></datalist>
 
+<!-- Modal เข้าสู่ระบบ (Modern UI) -->
 <div class="modal fade no-print" id="userAuthModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
-    <div class="modal-content" style="border-radius:18px; border:none; box-shadow:0 20px 40px rgba(15,23,42,0.22); background:#ffffff;">
-      <div class="modal-header border-0 pb-0 pt-4 px-4 text-center d-block position-relative">
-        <div style="width:48px; height:48px; background:#fef2f2; color:#b52324; border-radius:14px; display:inline-flex; align-items:center; justify-content:center; font-size:1.4rem; margin-bottom:10px;">🔒</div>
-        <h5 class="modal-title fw-bold text-dark" style="font-size:1.2rem;">เข้าสู่ระบบ CoC Dashboard</h5>
-      </div>
-      <div class="modal-body px-4 py-3">
-        <p class="text-muted text-center small mb-3" style="font-size:0.85rem; line-height:1.4;">สงวนสิทธิ์การเข้าถึงเฉพาะบุคลากรที่ได้รับอนุญาต กรุณากรอกรหัสผ่านเพื่อเข้าชม</p>
-        <div class="mb-2">
-          <label class="form-label small fw-medium text-secondary" for="userPassInput">รหัสผ่านเข้าชม (User Key)</label>
-          <input type="password" id="userPassInput" class="form-control form-control-lg" placeholder="••••••••" style="font-size:1.1rem; letter-spacing:3px; border-radius:10px;" autocomplete="off" onkeydown="if(event.key==='Enter')submitUserPass()">
+    <div class="modal-content" style="border-radius:24px; border:none; box-shadow:0 24px 48px rgba(15,23,42,0.18);">
+      <div class="modal-body p-5 text-center">
+        <!-- SVG แม่กุญแจทึบสีขาว บนพื้นดำขอบมน -->
+        <div style="width:68px; height:68px; background:#111827; color:#ffffff; border-radius:20px; display:inline-flex; align-items:center; justify-content:center; margin:0 auto 24px auto; box-shadow: 0 10px 25px rgba(17,24,39,0.2);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+          </svg>
         </div>
-        <div id="userAuthErr" class="text-danger small mt-2 text-center" style="display:none; font-size:0.85rem; font-weight:500;">❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</div>
-      </div>
-      <div class="modal-footer border-0 px-4 pb-4 pt-1">
-        <button type="button" class="btn btn-c w-100 py-2.5 fw-medium" style="border-radius:10px; font-size:0.95rem;" onclick="submitUserPass()">ยืนยันเข้าสู่ระบบ</button>
+        <h4 class="fw-bold text-dark mb-2" style="letter-spacing: -0.5px;">เข้าสู่ระบบ</h4>
+        <p class="text-muted small mb-4" style="font-size:0.9rem;">แดชบอร์ดผลงานวิชาการ CoC<br>กรุณากรอกรหัสผ่านเพื่อเข้าชม</p>
+        <div class="text-start mb-3">
+          <input type="password" id="userPassInput" class="form-control form-control-lg text-center" placeholder="••••••••" style="font-size:1.15rem; letter-spacing:4px; border-radius:12px; background:#f8fafc; border:2px solid #e2e8f0;" autocomplete="off" onkeydown="if(event.key==='Enter')submitUserPass()">
+          <div id="userAuthErr" class="text-danger mt-2 text-center" style="display:none; font-size:0.85rem; font-weight:500;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-circle-fill me-1" viewBox="0 0 16 16" style="vertical-align:-2px;"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg> รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่
+          </div>
+        </div>
+        <button type="button" class="btn w-100 py-3 fw-semibold text-white mt-2" style="background:#111827; border-radius:12px; font-size:1rem; transition:all 0.2s;" onclick="submitUserPass()" onmouseover="this.style.background='#000000'" onmouseout="this.style.background='#111827'">
+          ยืนยันการเข้าสู่ระบบ
+        </button>
       </div>
     </div>
   </div>
@@ -145,38 +148,27 @@ const API_ENDPOINT="/api/get-data",API_ADD="/api/add-data";
 const COL={year:['Year','ปี'],month:['Month','เดือน'],staff:['Staff name','ชื่ออาจารย์'],index:['Indexing','ฐานข้อมูล'],type:['Type','ประเภท'],prog:['Program','Curriculum','หลักสูตร','Major']};
 const PAL=['#33c0ca','#b52324','#f59e0b','#3b82f6','#10b981','#8b5cf6','#ec4899','#64748b'];
 const MTH=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-const THF=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const THS=['มค','กพ','มีค','เมย','พค','มิย','กค','สค','กย','ตค','พย','ธค'],ENS=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-Chart.register(ChartDataLabels);
-Chart.defaults.font.family="'Prompt',sans-serif";
+Chart.register(ChartDataLabels); Chart.defaults.font.family="'Prompt',sans-serif";
 let DATA=[],CH={},IS_DEMO=false,HAS_M=false,authModal=null;const CMP=new Set();
 const $=id=>document.getElementById(id);
 const pick=(r,ns)=>{for(const n of ns){if(r[n]!==undefined&&String(r[n]).trim()!=='')return String(r[n]).trim()}return ''};
 const lum=h=>{const c=[1,3,5].map(i=>parseInt(h.substr(i,2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*c[0]+.7152*c[1]+.0722*c[2]};
 const lc=h=>lum(h)>.3?'#1e293b':'#ffffff';
-function parseMonth(v){v=String(v||'').trim().toLowerCase().replace(/[.\s]/g,'');if(!v)return 0;
-  if(/^\d{1,2}$/.test(v)){const n=+v;return n>=1&&n<=12?n:0}
-  let i=THS.indexOf(v);if(i<0)i=THF.findIndex(f=>f.startsWith(v));if(i<0)i=ENS.indexOf(v.slice(0,3));return i+1}
+function parseMonth(v){v=String(v||'').trim().toLowerCase().replace(/[.\s]/g,'');if(!v)return 0;if(/^\d{1,2}$/.test(v)){const n=+v;return n>=1&&n<=12?n:0}let i=THS.indexOf(v);if(i<0)i=THF.findIndex(f=>f.startsWith(v));if(i<0)i=ENS.indexOf(v.slice(0,3));return i+1}
 function showMsg(t){$('msg').style.display='block';$('msg').textContent=t}
-function demo(){
-  const T=['International Journal Articles','International Proceedings','National Journal Articles','National Proceedings'],
-        P=['CS','IT','DSA','CYB'],S=['อ.สมชาย','อ.สมหญิง','อ.วิชัย','อ.มานี','อ.ปิติ'],I=['Scopus','TCI','WoS'],o=[];
-  for(let i=0;i<120;i++)o.push({year:2020+i%5,month:1+(i*5)%12,staff:S[i%5],index:I[i%3],type:T[(i*7)%4===3?2:i%2],prog:P[i%4]});
-  return o;
-}
-function normalize(rows){
-  if(rows.length&&Array.isArray(rows[0])){const h=rows[0].map(x=>String(x).trim());rows=rows.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]])))}
-  return rows.map(x=>{let y=parseInt(pick(x,COL.year));if(y>2400)y-=543;
-    return{year:y,month:parseMonth(pick(x,COL.month)),staff:pick(x,COL.staff),index:pick(x,COL.index),type:pick(x,COL.type),prog:pick(x,COL.prog)}})
-    .filter(x=>x.year&&x.staff);
-}
+function demo(){const T=['International Journal Articles','International Proceedings','National Journal Articles','National Proceedings'],P=['CS','IT','DSA','CYB'],S=['อ.สมชาย','อ.สมหญิง','อ.วิชัย','อ.มานี','อ.ปิติ'],I=['Scopus','TCI','WoS'],o=[];for(let i=0;i<120;i++)o.push({year:2020+i%5,month:1+(i*5)%12,staff:S[i%5],index:I[i%3],type:T[(i*7)%4===3?2:i%2],prog:P[i%4]});return o;}
+function normalize(rows){if(rows.length&&Array.isArray(rows[0])){const h=rows[0].map(x=>String(x).trim());rows=rows.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]])))}return rows.map(x=>{let y=parseInt(pick(x,COL.year));if(y>2400)y-=543;return{year:y,month:parseMonth(pick(x,COL.month)),staff:pick(x,COL.staff),index:pick(x,COL.index),type:pick(x,COL.type),prog:pick(x,COL.prog)}}).filter(x=>x.year&&x.staff);}
 
-function showAuthModal() {
+// --- ส่วนจัดการล็อกอิน Modern UI ---
+function showAuthModal(showError = false) {
   const el = $('userAuthModal');
   if (el && typeof bootstrap !== 'undefined') {
     if (!authModal) authModal = new bootstrap.Modal(el);
     $('userPassInput').value = '';
+    $('userAuthErr').style.display = showError ? 'block' : 'none';
     authModal.show();
+    el.addEventListener('shown.bs.modal', () => $('userPassInput').focus(), {once:true});
   }
 }
 function submitUserPass() {
@@ -184,18 +176,23 @@ function submitUserPass() {
   if (!val) return;
   sessionStorage.setItem('user_passcode', val);
   if (authModal) authModal.hide();
-  load();
+  load(); // โหลดข้อมูลอีกครั้งเมื่อกรอกรหัสเสร็จ
 }
 
 async function load(){
-  const passKey = sessionStorage.getItem('user_passcode') || '';
+  const passKey = sessionStorage.getItem('user_passcode');
+  // 1. ถ้าเพิ่งเข้าเว็บและยังไม่เคยกรอกรหัส (passKey เป็นค่าว่าง) ให้โชว์ Modal รอรับรหัส โดยห้ามโชว์ Error
+  if (!passKey) {
+    showAuthModal(false);
+    return;
+  }
+  // 2. ถ้ามีรหัสแล้ว ลองยิง API ดึงข้อมูล
   try{
-    const url = API_ENDPOINT + (passKey ? '?key=' + encodeURIComponent(passKey) : '');
+    const url = API_ENDPOINT + '?key=' + encodeURIComponent(passKey);
     const res = await fetch(url);
     if (res.status === 401) {
       sessionStorage.removeItem('user_passcode');
-      showAuthModal();
-      $('userAuthErr').style.display = 'block';
+      showAuthModal(true); // โชว์ Modal พร้อมคำเตือน "รหัสผิด"
       return;
     }
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -214,13 +211,11 @@ function fillYears(){
   const yrs = [...new Set(DATA.map(d => d.year))].filter(Boolean).sort((a,b)=>a-b);
   ['startYear', 'endYear'].forEach(id => {
     const s = $(id); if(!s) return;
-    const cur = s.value;
-    s.length = 1;
+    const cur = s.value; s.length = 1;
     yrs.forEach(y => s.add(new Option(y, y)));
     if([...s.options].some(o => o.value === cur)) s.value = cur;
   });
 }
-
 function fill(id,key){const s=$(id),v=s.value;s.length=1;[...new Set(DATA.map(d=>d[key]))].filter(Boolean).sort().forEach(x=>s.add(new Option(x,x)));if([...s.options].some(o=>o.value===v))s.value=v}
 function lists(){
   [['dlStaff','staff'],['dlType','type'],['dlProg','prog'],['dlIdx','index']].forEach(([id,k])=>{const dl=$(id);dl.textContent='';
@@ -248,8 +243,7 @@ function getF(skipStaff){
         st=$('staffF').value,pg=$('progF').value,ix=$('idxF').value,a=s*12+sm,b=e*12+em;
   return DATA.filter(d=>{const k=d.year*12+d.month;return k>=a&&k<=b&&(skipStaff||st==='All'||d.staff===st)&&(pg==='All'||d.prog===pg)&&(ix==='All'||d.index===ix)});
 }
-function axisInfo(){const s=+$('startYear').value,e=+$('endYear').value,bm=HAS_M&&s&&s===e;
-  return bm?{bm,key:d=>d.month,fmt:k=>k?MTH[k-1]:'ไม่ระบุ'}:{bm,key:d=>d.year,fmt:k=>k}}
+function axisInfo(){const s=+$('startYear').value,e=+$('endYear').value,bm=HAS_M&&s&&s===e;return bm?{bm,key:d=>d.month,fmt:k=>k?MTH[k-1]:'ไม่ระบุ'}:{bm,key:d=>d.year,fmt:k=>k}}
 const count=(arr,key)=>arr.reduce((o,d)=>{const k=d[key]||'ไม่ระบุ';o[k]=(o[k]||0)+1;return o},{});
 function mk(id,cfg){if(CH[id])CH[id].destroy();CH[id]=new Chart($(id),cfg)}
 const FONT={weight:600,size:11};
@@ -296,15 +290,11 @@ function renderCmp(){
   mk('cmpChart',{type:'bar',data:{labels:keys.map(ax.fmt),datasets:ds},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22,right:16}},
     plugins:{legend:{position:'bottom',labels:{usePointStyle:true}},datalabels:{font:FONT}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0},grid:{color:'#f1f5f9'}}}}});
 }
-
 const csvLine=r=>r.map(v=>{v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}).join(',');
 function dl(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/csv;charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function exportRows(){const f=getF(false);dl('publications.csv',[csvLine(['Year','Month','Staff name','Indexing','Type','Program']),...f.map(d=>csvLine([d.year,d.month||'',d.staff,d.index,d.type,d.prog]))].join('\n'))}
-function exportSummary(){const f=getF(false),L=[csvLine(['หัวข้อ','รายการ','จำนวนผลงาน'])];
-  [['ปี','year'],['ประเภทผลงาน','type'],['หลักสูตร','prog'],['ฐานข้อมูล','index'],['อาจารย์','staff']].forEach(([t,k])=>Object.entries(count(f,k)).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>L.push(csvLine([t,n,c]))));
-  dl('publications_summary.csv',L.join('\n'))}
+function exportSummary(){const f=getF(false),L=[csvLine(['หัวข้อ','รายการ','จำนวนผลงาน'])];[['ปี','year'],['ประเภทผลงาน','type'],['หลักสูตร','prog'],['ฐานข้อมูล','index'],['อาจารย์','staff']].forEach(([t,k])=>Object.entries(count(f,k)).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>L.push(csvLine([t,n,c]))));dl('publications_summary.csv',L.join('\n'))}
 function exportPdf(){window.print()}
-
 const canon=d=>({Year:d.year,Month:d.month||'','Staff name':d.staff,Indexing:d.index,Type:d.type,Program:d.prog});
 async function submit(list){
   const st=$('addStatus'),key=$('adminKey').value;
