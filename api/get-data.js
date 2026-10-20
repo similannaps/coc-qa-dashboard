@@ -1,19 +1,32 @@
 // Vercel Serverless Function: GET /api/get-data
-// อ่านลิงก์จริงจาก Environment Variable (ไม่อยู่ในโค้ด/GitHub) แล้วส่งข้อมูลกลับให้หน้าเว็บ
+const crypto = require("crypto");
+const eq = (a, b) => {
+  if (!a || !b) return false;
+  const x = Buffer.from(String(a)), y = Buffer.from(String(b));
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+};
+
 module.exports = async (req, res) => {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const apiUrl = process.env.GOOGLE_SHEET_API_URL;
-  if (!apiUrl) {
-    // ไม่บอกรายละเอียดภายใน เพื่อไม่ให้เปิดเผยโครงสร้างระบบ
+  const { GOOGLE_SHEET_API_URL, USER_KEY } = process.env;
+  if (!GOOGLE_SHEET_API_URL) {
     return res.status(500).json({ error: "Server is not configured" });
   }
 
+  // ตรวจสอบรหัสผ่านเข้าชม (USER_KEY)
+  if (USER_KEY) {
+    const userKey = req.query.key || req.headers["x-user-key"];
+    if (!eq(userKey, USER_KEY)) {
+      return res.status(401).json({ error: "Unauthorized access" });
+    }
+  }
+
   try {
-    const upstream = await fetch(apiUrl, { redirect: "follow" }); // Apps Script มักตอบกลับผ่าน redirect
+    const upstream = await fetch(GOOGLE_SHEET_API_URL, { redirect: "follow" });
     if (!upstream.ok) {
       return res.status(502).json({ error: "Upstream error" });
     }
@@ -22,11 +35,10 @@ module.exports = async (req, res) => {
       "Content-Type",
       upstream.headers.get("content-type") || "text/plain; charset=utf-8"
     );
-    // แคช 5 นาทีที่ Edge ของ Vercel ลดการเรียก Google และทำให้โหลดเร็วขึ้น
     res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
     return res.status(200).send(body);
   } catch (err) {
-    console.error("get-data failed"); // ไม่ log URL
+    console.error("get-data failed");
     return res.status(502).json({ error: "Failed to fetch data" });
   }
 };

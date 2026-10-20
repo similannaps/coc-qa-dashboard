@@ -150,7 +150,18 @@ function normalize(rows){
 }
 async function load(){
   try{
-    const res=await fetch(API_ENDPOINT);if(!res.ok)throw new Error('HTTP '+res.status);
+    let passKey = sessionStorage.getItem('user_passcode');
+    if (!passKey) {
+      passKey = prompt('🔒 กรุณากรอกรหัสผ่านสำหรับเข้าชมแดชบอร์ด (User Key):');
+      if (passKey) sessionStorage.setItem('user_passcode', passKey);
+    }
+    const res=await fetch(API_ENDPOINT + '?key=' + encodeURIComponent(passKey || ''));
+    if (res.status === 401) {
+      sessionStorage.removeItem('user_passcode');
+      alert('❌ รหัสผ่านเข้าชมไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+      location.reload();
+      return;
+    }if(!res.ok)throw new Error('HTTP '+res.status);
     const text=await res.text();let rows;
     try{const j=JSON.parse(text);if(typeof j!=='object')throw 0;rows=Array.isArray(j)?j:(j.data||j.rows||[])}
     catch(_){rows=Papa.parse(text,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data}
