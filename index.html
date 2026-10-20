@@ -55,8 +55,8 @@ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.
 
   <div class="box no-print"><div class="box-b">
     <div class="row g-3 align-items-end">
-      <div class="col-6 col-md-2"><label class="form-label" for="startYear">ตั้งแต่ปี (ค.ศ.)</label><div class="input-group"><input type="number" id="startYear" class="form-control" placeholder="เช่น 2020"><select id="startMonth" class="form-select mo" aria-label="เดือน"></select></div></div>
-      <div class="col-6 col-md-2"><label class="form-label" for="endYear">ถึงปี (ค.ศ.)</label><div class="input-group"><input type="number" id="endYear" class="form-control" placeholder="เช่น 2024"><select id="endMonth" class="form-select mo" aria-label="เดือน"></select></div></div>
+      <div class="col-6 col-md-2"><label class="form-label" for="startYear">ตั้งแต่ปี (ค.ศ.)</label><div class="input-group"><select id="startYear" class="form-select"><option value="">ทุกปี</option></select><select id="startMonth" class="form-select mo" aria-label="เดือน"></select></div></div>
+      <div class="col-6 col-md-2"><label class="form-label" for="endYear">ถึงปี (ค.ศ.)</label><div class="input-group"><select id="endYear" class="form-select"><option value="">ทุกปี</option></select><select id="endMonth" class="form-select mo" aria-label="เดือน"></select></div></div>
       <div class="col-md-2"><label class="form-label" for="staffF">ชื่ออาจารย์</label><select id="staffF" class="form-select"><option value="All">-- ทุกคน --</option></select></div>
       <div class="col-md-2"><label class="form-label" for="progF">หลักสูตร</label><select id="progF" class="form-select"><option value="All">-- ทั้งหมด --</option></select></div>
       <div class="col-md-2"><label class="form-label" for="idxF">ฐานข้อมูล (Indexing)</label><select id="idxF" class="form-select"><option value="All">-- ทั้งหมด --</option></select></div>
@@ -186,7 +186,20 @@ function lists(){
     l.className='dropdown-item d-flex gap-2 align-items-center';i.type='checkbox';i.checked=CMP.has(n);
     i.onchange=()=>{i.checked?CMP.add(n):CMP.delete(n);renderCmp()};l.append(i,document.createTextNode(n));m.appendChild(l)});
 }
+
+function fillYears(){
+  const yrs = [...new Set(DATA.map(d => d.year))].filter(Boolean).sort((a,b)=>a-b);
+  ['startYear', 'endYear'].forEach(id => {
+    const s = $(id); if(!s) return;
+    const cur = s.value;
+    s.length = 1;
+    yrs.forEach(y => s.add(new Option(y, y)));
+    if([...s.options].some(o => o.value === cur)) s.value = cur;
+  });
+}
+
 function refreshAll(){
+  fillYears();
   fill('staffF','staff');fill('progF','prog');fill('idxF','index');lists();
   HAS_M=DATA.some(d=>d.month);
   ['startMonth','endMonth'].forEach(id=>{$(id).disabled=!HAS_M;$(id).title=HAS_M?'':'ข้อมูลยังไม่มีคอลัมน์ Month'});
