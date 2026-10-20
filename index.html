@@ -42,7 +42,7 @@ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.
 </head>
 <body>
 <div class="hero"><div class="container-fluid px-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
-  <div><h1>CoC QA Dashboard</h1><p>ผลงานทางวิชาการของอาจารย์ วิทยาลัยการคอมพิวเตอร์</p></div>
+  <div class="d-flex align-items-center gap-3"><img src="College-of-Computing.png" alt="CoC Logo" style="height: 56px; background: #fff; padding: 6px 12px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"><div><h1 style="margin-bottom: 2px;">CoC QA Dashboard</h1><p style="margin:0; opacity:0.9;">ผลงานทางวิชาการของอาจารย์ วิทยาลัยการคอมพิวเตอร์</p></div></div>
   <div class="d-flex gap-2 no-print">
     <div class="dropdown"><button class="btn btn-hd dropdown-toggle" data-bs-toggle="dropdown">ส่งออก</button>
       <ul class="dropdown-menu dropdown-menu-end"><li><button class="dropdown-item" onclick="exportSummary()">สรุปเป็น CSV</button></li><li><button class="dropdown-item" onclick="exportRows()">รายการผลงานเป็น CSV</button></li><li><button class="dropdown-item" onclick="exportPdf()">บันทึกเป็น PDF</button></li></ul></div>
@@ -121,11 +121,7 @@ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.
     <div class="modal-content" style="border-radius:24px; border:none; box-shadow:0 24px 48px rgba(15,23,42,0.18);">
       <div class="modal-body p-5 text-center">
         <!-- SVG แม่กุญแจทึบสีขาว บนพื้นดำขอบมน -->
-        <div style="width:68px; height:68px; background:#111827; color:#ffffff; border-radius:20px; display:inline-flex; align-items:center; justify-content:center; margin:0 auto 24px auto; box-shadow: 0 10px 25px rgba(17,24,39,0.2);">
-          <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-          </svg>
-        </div>
+        <img src="College-of-Computing.png" alt="College of Computing" style="height: 75px; margin: 0 auto 24px auto; display: block; object-fit: contain;">
         <h4 class="fw-bold text-dark mb-2" style="letter-spacing: -0.5px;">เข้าสู่ระบบ</h4>
         <p class="text-muted small mb-4" style="font-size:0.9rem;">แดชบอร์ดผลงานวิชาการ CoC<br>กรุณากรอกรหัสผ่านเพื่อเข้าชม</p>
         <div class="text-start mb-3">
