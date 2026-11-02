@@ -120,7 +120,6 @@ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.
   <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
     <div class="modal-content" style="border-radius:24px; border:none; box-shadow:0 24px 48px rgba(15,23,42,0.18);">
       <div class="modal-body p-5 text-center">
-        <!-- SVG แม่กุญแจทึบสีขาว บนพื้นดำขอบมน -->
         <img src="College-of-Computing.png" alt="College of Computing" style="height: 75px; margin: 0 auto 24px auto; display: block; object-fit: contain;">
         <h4 class="fw-bold text-dark mb-2" style="letter-spacing: -0.5px;">เข้าสู่ระบบ</h4>
         <p class="text-muted small mb-4" style="font-size:0.9rem;">แดชบอร์ดผลงานวิชาการ CoC<br>กรุณากรอกรหัสผ่านเพื่อเข้าชม</p>
@@ -156,7 +155,6 @@ function showMsg(t){$('msg').style.display='block';$('msg').textContent=t}
 function demo(){const T=['International Journal Articles','International Proceedings','National Journal Articles','National Proceedings'],P=['CS','IT','DSA','CYB'],S=['อ.สมชาย','อ.สมหญิง','อ.วิชัย','อ.มานี','อ.ปิติ'],I=['Scopus','TCI','WoS'],o=[];for(let i=0;i<120;i++)o.push({year:2020+i%5,month:1+(i*5)%12,staff:S[i%5],index:I[i%3],type:T[(i*7)%4===3?2:i%2],prog:P[i%4]});return o;}
 function normalize(rows){if(rows.length&&Array.isArray(rows[0])){const h=rows[0].map(x=>String(x).trim());rows=rows.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]])))}return rows.map(x=>{let y=parseInt(pick(x,COL.year));if(y>2400)y-=543;return{year:y,month:parseMonth(pick(x,COL.month)),staff:pick(x,COL.staff),index:pick(x,COL.index),type:pick(x,COL.type),prog:pick(x,COL.prog)}}).filter(x=>x.year&&x.staff);}
 
-// --- ส่วนจัดการล็อกอิน Modern UI ---
 function showAuthModal(showError = false) {
   const el = $('userAuthModal');
   if (el && typeof bootstrap !== 'undefined') {
@@ -172,23 +170,21 @@ function submitUserPass() {
   if (!val) return;
   sessionStorage.setItem('user_passcode', val);
   if (authModal) authModal.hide();
-  load(); // โหลดข้อมูลอีกครั้งเมื่อกรอกรหัสเสร็จ
+  load();
 }
 
 async function load(){
   const passKey = sessionStorage.getItem('user_passcode');
-  // 1. ถ้าเพิ่งเข้าเว็บและยังไม่เคยกรอกรหัส (passKey เป็นค่าว่าง) ให้โชว์ Modal รอรับรหัส โดยห้ามโชว์ Error
   if (!passKey) {
     showAuthModal(false);
     return;
   }
-  // 2. ถ้ามีรหัสแล้ว ลองยิง API ดึงข้อมูล
   try{
     const url = API_ENDPOINT + '?key=' + encodeURIComponent(passKey);
     const res = await fetch(url);
     if (res.status === 401) {
       sessionStorage.removeItem('user_passcode');
-      showAuthModal(true); // โชว์ Modal พร้อมคำเตือน "รหัสผิด"
+      showAuthModal(true);
       return;
     }
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -197,7 +193,7 @@ async function load(){
     catch(_){rows = Papa.parse(text, {header:true, skipEmptyLines:true, transformHeader:h=>h.trim()}).data}
     DATA = normalize(rows); if (!DATA.length) throw new Error('empty');
   }catch(err){
-    showMsg('โหลดข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ กำลังแสดงข้อมูลตัวอย่าง (ตรวจสอบการตั้งค่า GOOGLE_SHEET_API_URL บน Vercel)');
+    showMsg('โหลดข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ กำลังแสดงข้อมูลตัวอย่าง');
     IS_DEMO = true; DATA = demo();
   }
   start();
@@ -246,7 +242,7 @@ const FONT={weight:600,size:11};
 
 function render(){
   const f=getF(false),ax=axisInfo(),g=$('groupBy').value;
-  if(!f.length)showMsg('ไม่พบผลงานตามตัวกรองที่เลือก ลองขยายช่วงเวลาหรือกดล้าง');else if(!IS_DEMO)$('msg').style.display='none';
+  if(!f.length)showMsg('ไม่พบผลงานตามตัวกรองที่เลือก');else if(!IS_DEMO)$('msg').style.display='none';
   const keys=[...new Set(f.map(ax.key))].sort((a,b)=>a-b),labels=keys.map(ax.fmt),tot=keys.map(k=>f.filter(d=>ax.key(d)===k).length);
   const people=new Set(f.map(d=>d.staff)).size;
   $('k1').textContent=f.length;$('k2').textContent=people;$('k3').textContent=people?(f.length/people).toFixed(1):0;
@@ -254,12 +250,12 @@ function render(){
   $('k4l').textContent=ax.bm?'เดือนที่มีผลงานมากสุด':'ปีที่มีผลงานมากสุด';
   $('yTitle').textContent=ax.bm?'จำนวนผลงานรวมในแต่ละเดือน':'จำนวนผลงานรวมในแต่ละปี';
   const o=x=>x.options[x.selectedIndex].text;
-  $('printInfo').textContent='ช่วงเวลา: '+($('startYear').value||'เริ่มต้น')+(+$('startMonth').value?' '+o($('startMonth')):'')+' ถึง '+($('endYear').value||'ล่าสุด')+(+$('endMonth').value?' '+o($('endMonth')):'')+' | อาจารย์: '+o($('staffF'))+' | หลักสูตร: '+o($('progF'))+' | ฐานข้อมูล: '+o($('idxF'));
+  $('printInfo').textContent='ช่วงเวลา: '+($('startYear').value||'เริ่มต้น')+' ถึง '+($('endYear').value||'ล่าสุด');
   let ds;
   if(g==='none')ds=[{label:'จำนวนผลงาน',data:tot,backgroundColor:PAL[0],borderRadius:6,datalabels:{color:'#1e293b',anchor:'end',align:'end'}}];
   else ds=[...new Set(f.map(d=>d[g]||'ไม่ระบุ'))].sort().map((k,i)=>{const c=PAL[i%PAL.length];
     return{label:k,backgroundColor:c,borderRadius:3,data:keys.map(y=>f.filter(d=>ax.key(d)===y&&(d[g]||'ไม่ระบุ')===k).length),
-      datalabels:{color:lc(c),anchor:'center',align:'center',display:x=>x.dataset.data[x.dataIndex]>0}}});
+      datalabels:{color:lc(c),anchor:'center',align:'center',display:ctx=>ctx.dataset.data[ctx.dataIndex]>=4}}});
   const base={responsive:true,maintainAspectRatio:false,layout:{padding:{top:22,right:16}}};
   mk('yearChart',{type:'bar',data:{labels,datasets:ds},options:{...base,plugins:{legend:{display:g!=='none',position:'bottom',labels:{usePointStyle:true}},datalabels:{font:FONT}},
     scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0},grid:{color:'#f1f5f9'}}}}});
@@ -299,9 +295,9 @@ async function submit(list){
   try{
     const r=await fetch(API_ADD,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,rows:list.map(canon)})});
     const j=await r.json().catch(()=>({}));
-    if(r.ok){DATA=DATA.concat(list);refreshAll();st.textContent='บันทึกลง Google Sheet แล้ว '+list.length+' รายการ';return true}
+    if(r.ok){DATA=DATA.concat(list);refreshAll();st.textContent='บันทึกลง Google Sheet แล้ว';return true}
     if(r.status===501){DATA=DATA.concat(list);refreshAll();st.textContent='เพิ่มข้อมูลชั่วคราวเฉพาะหน้านี้';return true}
-    st.textContent=r.status===401?'รหัสผู้ดูแลไม่ถูกต้อง':'บันทึกไม่สำเร็จ: '+(j.error||r.status);
+    st.textContent=r.status===401?'รหัสผู้ดูแลไม่ถูกต้อง':'บันทึกไม่สำเร็จ';
   }catch(e){st.textContent='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'}
   return false;
 }
