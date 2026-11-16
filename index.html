@@ -38,6 +38,33 @@ body{font-family:'Prompt',sans-serif;background:#f1f5f9;color:var(--tx)}
 .print-only{display:none}
 @media print{.no-print,#msg{display:none!important}.print-only{display:block!important;margin-bottom:12px}
 body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.hero{padding:16px 0}.wrap{margin-top:0;padding-top:12px}.box{break-inside:avoid;box-shadow:none}}
+
+/* v6: compact management modal, aligned with original CoC dashboard */
+#dataModal .modal-dialog{max-width:960px}
+#dataModal .modal-content{border:1px solid var(--bd);box-shadow:0 18px 52px rgba(15,23,42,.16)}
+#dataModal .modal-header{padding:14px 20px;border-bottom:1px solid var(--bd)}
+#dataModal .modal-title{font-size:1.1rem;font-weight:600;color:var(--tx)}
+#dataModal .modal-body{padding:18px 20px 22px}
+#dataModal .modal-body hr{border-color:var(--bd);opacity:1;margin:18px 0}
+#dataModal .form-control,#dataModal .form-select{min-height:39px}
+#dataModal .btn{border-radius:7px;font-size:.87rem;font-weight:500}
+#dataModal .section-title{font-size:.94rem;font-weight:600;margin:0;color:var(--tx)}
+#dataModal .section-note{font-size:.78rem;color:#64748b;line-height:1.65;margin:5px 0 10px}
+#dataModal .manage-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#dataModal .manage-toolbar .csv-file{flex:1 1 240px;min-width:170px;max-width:390px}
+#dataModal .manage-toolbar .btn{white-space:nowrap}
+#dataModal .manage-table{border:1px solid var(--bd);border-radius:8px;overflow:auto;max-height:280px}
+#dataModal .manage-table table{margin:0;font-size:.83rem}
+#dataModal .manage-table thead th{background:#f8fafc;color:#475569;font-weight:500;white-space:nowrap;position:sticky;top:0;z-index:1}
+#dataModal .manage-table td,#dataModal .manage-table th{padding:9px 10px;border-color:#edf2f7}
+#dataModal .danger-details{border:1px solid #f2d6d6;border-radius:9px;background:#fffafa;margin-top:14px}
+#dataModal .danger-details summary{cursor:pointer;list-style:none;padding:11px 13px;font-size:.85rem;font-weight:500;color:#a52222;display:flex;align-items:center;gap:8px}
+#dataModal .danger-details summary::-webkit-details-marker{display:none}
+#dataModal .danger-details summary:before{content:'▸';font-size:.8rem}
+#dataModal .danger-details[open] summary:before{content:'▾'}
+#dataModal .danger-inner{padding:0 13px 13px}
+#dataModal .danger-inner .form-control{max-width:205px}
+@media(max-width:575px){#dataModal .modal-body{padding:14px}#dataModal .manage-toolbar .csv-file{max-width:none;flex-basis:100%}#dataModal .danger-inner .form-control{max-width:none}}
 </style>
 </head>
 <body>
@@ -100,7 +127,7 @@ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.
 </div>
 
 <!-- Modal จัดการข้อมูล -->
-<div class="modal fade no-print" id="dataModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content" style="border-radius:14px">
+<div class="modal fade no-print" id="dataModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-xl"><div class="modal-content" style="border-radius:14px">
 <div class="modal-header"><h2 class="modal-title fs-5">จัดการข้อมูล</h2><button class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button></div>
 <div class="modal-body">
 <div class="tab-content"><div class="tab-pane fade show active" id="tabOne"><div class="row g-3">
@@ -110,9 +137,42 @@ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.
 <div class="col-md-4"><label class="form-label" for="aProg">หลักสูตร</label><input id="aProg" class="form-control" list="dlProg"></div>
 <div class="col-md-4"><label class="form-label" for="aType">ประเภทผลงาน</label><input id="aType" class="form-control" list="dlType"></div>
 <div class="col-md-4"><label class="form-label" for="aIdx">ฐานข้อมูล (Indexing)</label><input id="aIdx" class="form-control" list="dlIdx"></div>
-</div><button class="btn btn-c mt-3 px-4" onclick="addOne()">บันทึก</button></div></div><hr>
+</div><div class="d-flex gap-2 mt-3"><button class="btn btn-c px-4" id="saveOneBtn" onclick="addOne()">เพิ่มข้อมูล</button><button class="btn btn-outline-secondary" id="cancelEditBtn" style="display:none" onclick="cancelEdit()">ยกเลิกแก้ไข</button></div></div></div><hr>
 <label class="form-label" for="adminKey">รหัสผู้ดูแล</label><input type="password" id="adminKey" class="form-control" autocomplete="off">
-<p id="addStatus" class="mt-2 mb-0" style="font-size:.875rem" role="status"></p></div></div></div></div>
+<p id="addStatus" class="mt-2 mb-0" style="font-size:.875rem" role="status"></p>
+<hr>
+<section aria-labelledby="csvHeading">
+  <h3 id="csvHeading" class="section-title">นำเข้าข้อมูลจากไฟล์ CSV</h3>
+  <p class="section-note">รองรับ Year, Month, Staff name, Program, Type, Indexing หรือชื่อคอลัมน์ภาษาไทย · สูงสุด 500 รายการต่อชุด · ข้อมูลซ้ำทั้ง 6 ช่องจะถูกข้าม</p>
+  <div class="manage-toolbar">
+    <input type="file" id="csvUpload" accept=".csv,text/csv" class="form-control csv-file" aria-label="เลือกไฟล์ CSV">
+    <button class="btn btn-c" onclick="uploadCsv()">นำเข้า CSV</button>
+    <button class="btn btn-outline-secondary" onclick="downloadCsvTemplate()">ดาวน์โหลดเทมเพลต</button>
+  </div>
+  <p id="csvStatus" class="small mt-2 mb-0" role="status"></p>
+</section>
+<hr>
+<section aria-labelledby="manageHeading">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <h3 id="manageHeading" class="section-title">รายการผลงานในระบบ</h3>
+    <button class="btn btn-outline-secondary btn-sm" onclick="loadManageRows()">โหลด / รีเฟรชรายการ</button>
+  </div>
+  <input id="manageSearch" class="form-control mb-2" placeholder="ค้นหาชื่ออาจารย์ ปี หลักสูตร ประเภทผลงาน..." oninput="renderManageRows()" aria-label="ค้นหารายการ">
+  <div class="manage-table"><table class="table table-sm table-hover align-middle"><thead><tr><th>ปี</th><th>เดือน</th><th>อาจารย์</th><th>หลักสูตร</th><th>ประเภท</th><th>ฐานข้อมูล</th><th>จัดการ</th></tr></thead><tbody id="manageRows"><tr><td colspan="7" class="text-muted">กดโหลดรายการเพื่อแก้ไขหรือลบข้อมูล</td></tr></tbody></table></div>
+  <p id="manageStatus" class="small mt-2 mb-0" role="status"></p>
+</section>
+<details class="danger-details">
+  <summary>ลบข้อมูลทั้งหมด (เฉพาะผู้ดูแล)</summary>
+  <div class="danger-inner">
+    <p class="section-note">ลบข้อมูลทุกแถวใน Google Sheets โดยคงหัวตารางไว้ การลบย้อนกลับไม่ได้ กรุณาสำรองข้อมูลก่อน</p>
+    <div class="manage-toolbar">
+      <button class="btn btn-outline-secondary btn-sm" onclick="backupAllCsv()">ดาวน์โหลดสำรอง CSV</button>
+      <input id="deleteAllConfirm" class="form-control form-control-sm" placeholder="พิมพ์ DELETE ALL" aria-label="ยืนยันลบข้อมูลทั้งหมด">
+      <button class="btn btn-outline-danger btn-sm" onclick="deleteAllRows()">ยืนยันลบทั้งหมด</button>
+    </div>
+    <p id="deleteAllStatus" class="small mt-2 mb-0" role="status"></p>
+  </div>
+</details></div></div></div></div></div>
 <datalist id="dlStaff"></datalist><datalist id="dlProg"></datalist><datalist id="dlType"></datalist><datalist id="dlIdx"></datalist>
 
 <!-- Modal เข้าสู่ระบบ (Modern UI) -->
@@ -139,10 +199,11 @@ body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-const API_ENDPOINT="/api/get-data",API_ADD="/api/add-data";
+const API_ENDPOINT="/api/get-data",API_ADD="/api/manage-data";
 const COL={year:['Year','ปี'],month:['Month','เดือน'],staff:['Staff name','ชื่ออาจารย์'],index:['Indexing','ฐานข้อมูล'],type:['Type','ประเภท'],prog:['Program','Curriculum','หลักสูตร','Major']};
 const PAL=['#33c0ca','#b52324','#f59e0b','#3b82f6','#10b981','#8b5cf6','#ec4899','#64748b'];
 const MTH=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const THF=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const THS=['มค','กพ','มีค','เมย','พค','มิย','กค','สค','กย','ตค','พย','ธค'],ENS=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 Chart.register(ChartDataLabels); Chart.defaults.font.family="'Prompt',sans-serif";
 let DATA=[],CH={},IS_DEMO=false,HAS_M=false,authModal=null;const CMP=new Set();
@@ -191,7 +252,7 @@ async function load(){
     const text = await res.text(); let rows;
     try{const j = JSON.parse(text); if (typeof j !== 'object') throw 0; rows = Array.isArray(j) ? j : (j.data || j.rows || [])}
     catch(_){rows = Papa.parse(text, {header:true, skipEmptyLines:true, transformHeader:h=>h.trim()}).data}
-    DATA = normalize(rows); if (!DATA.length) throw new Error('empty');
+    DATA = normalize(rows); IS_DEMO=false; if (!DATA.length) throw new Error('empty');
   }catch(err){
     showMsg('โหลดข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ กำลังแสดงข้อมูลตัวอย่าง');
     IS_DEMO = true; DATA = demo();
@@ -199,6 +260,38 @@ async function load(){
   start();
 }
 
+const MAIN_PROGRAMS=['DE','DBiz','AISE','Comp','ไม่ระบุ'];
+// Split comma-separated memberships, strip asterisks, and group MsComp under Comp.
+function programGroups(raw){
+  const parts=String(raw||'').split(',').map(x=>x.trim().replace(/\*/g,'').replace(/\s+/g,'').toLowerCase()).filter(Boolean);
+  const found=new Set();
+  for(const part of parts){
+    if(part==='de')found.add('DE');
+    else if(part==='dbiz')found.add('DBiz');
+    else if(part==='aise')found.add('AISE');
+    else if(part==='comp'||part==='mscomp')found.add('Comp');
+  }
+  if(!found.size)found.add('ไม่ระบุ');
+  return MAIN_PROGRAMS.filter(p=>found.has(p));
+}
+function programCounts(rows){const out=Object.fromEntries(MAIN_PROGRAMS.map(x=>[x,0]));for(const d of rows)for(const p of programGroups(d.prog))out[p]++;return out;}
+function downloadCsvTemplate(){dl('coc_publications_template.csv',[csvLine(['Year','Month','Staff name','Program','Type','Indexing']),csvLine([2026,1,'ตัวอย่าง อาจารย์','DE, AISE, MsComp*','International Journal Articles','Scopus'])].join('\n'));}
+async function backupAllCsv(){
+ try{const j=await adminRequest({action:'list'});const rows=j.rows||[];if(!rows.length){status('deleteAllStatus','ไม่มีข้อมูลให้สำรอง');return;}
+ const cols=['Year','Month','Staff name','Program','Type','Indexing'];dl('coc_backup_all_'+new Date().toISOString().slice(0,10)+'.csv',[csvLine(cols),...rows.map(x=>csvLine(cols.map(k=>x.record[k]??'')))].join('\n'));
+ status('deleteAllStatus',`ดาวน์โหลดสำรอง ${rows.length} รายการแล้ว กรุณาเก็บไฟล์ให้ปลอดภัย`);
+ }catch(e){status('deleteAllStatus',e.message,true);}
+}
+async function deleteAllRows(){
+ try{
+ if($('deleteAllConfirm').value.trim()!=='DELETE ALL')throw Error('กรุณาพิมพ์ DELETE ALL ให้ตรงก่อน');
+ const j=await adminRequest({action:'list'});const count=(j.rows||[]).length;
+ if(!count){status('deleteAllStatus','ไม่มีข้อมูลให้ลบ');return;}
+ if(!confirm(`คุณกำลังจะลบข้อมูลทั้งหมด ${count} รายการจาก Google Sheets จริง\nต้องสำรอง CSV ก่อน และไม่สามารถย้อนกลับได้\nยืนยันการลบทั้งหมดหรือไม่?`))return;
+ const result=await adminRequest({action:'deleteAll',confirmation:'DELETE ALL',expectedCount:count});
+ $('deleteAllConfirm').value='';status('deleteAllStatus',`ลบทั้งหมด ${result.deleted} รายการแล้ว`);await refreshAfterChange();
+ }catch(e){status('deleteAllStatus',e.message,true);}
+}
 function fillYears(){
   const yrs = [...new Set(DATA.map(d => d.year))].filter(Boolean).sort((a,b)=>a-b);
   ['startYear', 'endYear'].forEach(id => {
@@ -219,21 +312,21 @@ function lists(){
     i.onchange=()=>{i.checked?CMP.add(n):CMP.delete(n);renderCmp()};l.append(i,document.createTextNode(n));m.appendChild(l)});
 }
 function refreshAll(){
-  fillYears();fill('staffF','staff');fill('progF','prog');fill('idxF','index');lists();
+  fillYears();fill('staffF','staff');const pg=$('progF'),prev=pg.value;pg.length=0;pg.add(new Option('-- ทั้งหมด --','All'));MAIN_PROGRAMS.forEach(x=>pg.add(new Option(x,x)));pg.value=MAIN_PROGRAMS.includes(prev)?prev:'All';fill('idxF','index');lists();
   HAS_M=DATA.some(d=>d.month);
   ['startMonth','endMonth'].forEach(id=>{$(id).disabled=!HAS_M;$(id).title=HAS_M?'':'ข้อมูลยังไม่มีคอลัมน์ Month'});
   render();
 }
 function start(){
   ['startMonth','endMonth'].forEach(id=>{const s=$(id);if(s.options.length<=1){s.add(new Option('เดือน',0));MTH.forEach((m,i)=>s.add(new Option(m,i+1)))}});
-  $('groupBy').addEventListener('input',render);
+  $('groupBy').oninput=render;
   refreshAll();
 }
 function resetF(){['startYear','endYear'].forEach(i=>$(i).value='');['startMonth','endMonth'].forEach(i=>$(i).value=0);['staffF','progF','idxF'].forEach(i=>$(i).value='All');render()}
 function getF(skipStaff){
   const s=+$('startYear').value||0,e=+$('endYear').value||9999,sm=+$('startMonth').value||0,em=+$('endMonth').value||12,
         st=$('staffF').value,pg=$('progF').value,ix=$('idxF').value,a=s*12+sm,b=e*12+em;
-  return DATA.filter(d=>{const k=d.year*12+d.month;return k>=a&&k<=b&&(skipStaff||st==='All'||d.staff===st)&&(pg==='All'||d.prog===pg)&&(ix==='All'||d.index===ix)});
+  return DATA.filter(d=>{const k=d.year*12+d.month;return k>=a&&k<=b&&(skipStaff||st==='All'||d.staff===st)&&(pg==='All'||programGroups(d.prog).includes(pg))&&(ix==='All'||d.index===ix)});
 }
 function axisInfo(){const s=+$('startYear').value,e=+$('endYear').value,bm=HAS_M&&s&&s===e;return bm?{bm,key:d=>d.month,fmt:k=>k?MTH[k-1]:'ไม่ระบุ'}:{bm,key:d=>d.year,fmt:k=>k}}
 const count=(arr,key)=>arr.reduce((o,d)=>{const k=d[key]||'ไม่ระบุ';o[k]=(o[k]||0)+1;return o},{});
@@ -253,8 +346,8 @@ function render(){
   $('printInfo').textContent='ช่วงเวลา: '+($('startYear').value||'เริ่มต้น')+' ถึง '+($('endYear').value||'ล่าสุด');
   let ds;
   if(g==='none')ds=[{label:'จำนวนผลงาน',data:tot,backgroundColor:PAL[0],borderRadius:6,datalabels:{color:'#1e293b',anchor:'end',align:'end'}}];
-  else ds=[...new Set(f.map(d=>d[g]||'ไม่ระบุ'))].sort().map((k,i)=>{const c=PAL[i%PAL.length];
-    return{label:k,backgroundColor:c,borderRadius:3,data:keys.map(y=>f.filter(d=>ax.key(d)===y&&(d[g]||'ไม่ระบุ')===k).length),
+  else ds=(g==='prog'?MAIN_PROGRAMS:[...new Set(f.map(d=>d[g]||'ไม่ระบุ'))].sort()).map((k,i)=>{const c=PAL[i%PAL.length];
+    return{label:k,backgroundColor:c,borderRadius:3,data:keys.map(y=>f.filter(d=>ax.key(d)===y&&(g==='prog'?programGroups(d.prog).includes(k):(d[g]||'ไม่ระบุ')===k)).length),
       datalabels:{color:lc(c),anchor:'center',align:'center',display:ctx=>ctx.dataset.data[ctx.dataIndex]>=4}}});
   const base={responsive:true,maintainAspectRatio:false,layout:{padding:{top:22,right:16}}};
   mk('yearChart',{type:'bar',data:{labels,datasets:ds},options:{...base,plugins:{legend:{display:g!=='none',position:'bottom',labels:{usePointStyle:true}},datalabels:{font:FONT}},
@@ -263,7 +356,7 @@ function render(){
   mk('typeChart',{type:'doughnut',data:{labels:Object.keys(tc),datasets:[{data:Object.values(tc),backgroundColor:PAL,borderColor:'#fff',borderWidth:3}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true}},
       datalabels:{font:FONT,color:x=>lc(PAL[x.dataIndex%PAL.length]),formatter:(v,x)=>{const t=x.dataset.data.reduce((a,b)=>a+b,0),p=Math.round(v/t*100);return p>=6?v+' ('+p+'%)':''}}}}});
-  const pc=count(f,'prog');
+  const pc=programCounts(f);
   mk('progChart',{type:'bar',data:{labels:Object.keys(pc),datasets:[{data:Object.values(pc),backgroundColor:PAL[1],borderRadius:6,datalabels:{color:'#1e293b',anchor:'end',align:'end'}}]},
     options:{...base,plugins:{legend:{display:false},datalabels:{font:FONT}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}});
   const sc=Object.entries(count(f,'staff')).sort((a,b)=>b[1]-a[1]).slice(0,10);
@@ -285,28 +378,124 @@ function renderCmp(){
 const csvLine=r=>r.map(v=>{v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}).join(',');
 function dl(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/csv;charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function exportRows(){const f=getF(false);dl('publications.csv',[csvLine(['Year','Month','Staff name','Indexing','Type','Program']),...f.map(d=>csvLine([d.year,d.month||'',d.staff,d.index,d.type,d.prog]))].join('\n'))}
-function exportSummary(){const f=getF(false),L=[csvLine(['หัวข้อ','รายการ','จำนวนผลงาน'])];[['ปี','year'],['ประเภทผลงาน','type'],['หลักสูตร','prog'],['ฐานข้อมูล','index'],['อาจารย์','staff']].forEach(([t,k])=>Object.entries(count(f,k)).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>L.push(csvLine([t,n,c]))));dl('publications_summary.csv',L.join('\n'))}
+function exportSummary(){const f=getF(false),L=[csvLine(['หัวข้อ','รายการ','จำนวนผลงาน'])];[['ปี','year'],['ประเภทผลงาน','type'],['หลักสูตร','prog'],['ฐานข้อมูล','index'],['อาจารย์','staff']].forEach(([t,k])=>Object.entries(k==='prog'?programCounts(f):count(f,k)).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>L.push(csvLine([t,n,c]))));dl('publications_summary.csv',L.join('\n'))}
 function exportPdf(){window.print()}
 const canon=d=>({Year:d.year,Month:d.month||'','Staff name':d.staff,Indexing:d.index,Type:d.type,Program:d.prog});
+let MANAGE_ROWS=[], EDITING=null;
+const sixKey=d=>[d.year,d.month||'',d.staff,d.prog,d.type,d.index].map(v=>String(v??'').trim().replace(/\s+/g,' ').toLocaleLowerCase()).join('\u001f');
+function status(id,message,error=false){const el=$(id);el.textContent=message;el.className=(error?'text-danger':'text-success')+' small mt-2';}
+async function adminRequest(payload){
+  const key=$('adminKey').value;
+  if(!key)throw Error('กรุณากรอกรหัสผู้ดูแล');
+  const r=await fetch(API_ADD,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,...payload})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw Error(r.status===401?'รหัสผู้ดูแลไม่ถูกต้อง':j.error||'ไม่สามารถบันทึกข้อมูลได้');
+  return j;
+}
+async function refreshAfterChange(){
+  // Force fresh data from Google Sheets; do not display an optimistic count as persisted.
+  await load();
+  await loadManageRows();
+}
 async function submit(list){
-  const st=$('addStatus'),key=$('adminKey').value;
-  if(!key){st.textContent='กรอกรหัสผู้ดูแลก่อน';return false}
-  st.textContent='กำลังบันทึก...';
   try{
-    const r=await fetch(API_ADD,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,rows:list.map(canon)})});
-    const j=await r.json().catch(()=>({}));
-    if(r.ok){DATA=DATA.concat(list);refreshAll();st.textContent='บันทึกลง Google Sheet แล้ว';return true}
-    if(r.status===501){DATA=DATA.concat(list);refreshAll();st.textContent='เพิ่มข้อมูลชั่วคราวเฉพาะหน้านี้';return true}
-    st.textContent=r.status===401?'รหัสผู้ดูแลไม่ถูกต้อง':'บันทึกไม่สำเร็จ';
-  }catch(e){st.textContent='เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'}
-  return false;
+    if(IS_DEMO)throw Error('ขณะนี้เป็นข้อมูลตัวอย่าง กรุณาตรวจสอบการเชื่อมต่อก่อน');
+    status('addStatus','กำลังบันทึก...');
+    let added=0,skipped=0;
+    for(let i=0;i<list.length;i+=500){
+      const j=await adminRequest({action:'add',rows:list.slice(i,i+500).map(canon)});
+      added+=j.added||0;skipped+=j.skipped||0;
+    }
+    status('addStatus',`เพิ่มสำเร็จ ${added} รายการ · มีข้อมูลอยู่ในระบบแล้ว ${skipped} รายการ (ข้าม)`);
+    await refreshAfterChange();
+    return true;
+  }catch(e){status('addStatus',e.message,true);return false;}
+}
+function formRow(){
+  let y=Number($('aYear').value);if(y>2400)y-=543;
+  const row={year:y,month:Number($('aMonth').value)||0,staff:$('aStaff').value.trim(),prog:$('aProg').value.trim(),type:$('aType').value.trim(),index:$('aIdx').value.trim()};
+  if(!Number.isInteger(y)||y<1990||y>2100||!row.staff)throw Error('กรอกปี ค.ศ. 1990–2100 และชื่ออาจารย์');
+  return row;
 }
 async function addOne(){
-  const y=+$('aYear').value,s=$('aStaff').value.trim();
-  if(!(y>=1990&&y<=2600)||!s){$('addStatus').textContent='กรอกปีและชื่ออาจารย์ให้ครบ';return}
-  const ok=await submit([{year:y>2400?y-543:y,month:+$('aMonth').value||0,staff:s,index:$('aIdx').value.trim(),type:$('aType').value.trim(),prog:$('aProg').value.trim()}]);
-  if(ok)$('aStaff').value='';
+  let row;try{row=formRow();}catch(e){status('addStatus',e.message,true);return;}
+  if(EDITING){
+    try{
+      status('addStatus','กำลังแก้ไข...');
+      const j=await adminRequest({action:'update',rowNumber:EDITING.rowNumber,fingerprint:EDITING.fingerprint,row:canon(row)});
+      if(j.duplicate){status('addStatus','มีข้อมูลอยู่ในระบบแล้ว ไม่สามารถแก้ไขให้ซ้ำได้',true);return;}
+      cancelEdit();status('addStatus','แก้ไขข้อมูลสำเร็จ');await refreshAfterChange();
+    }catch(e){status('addStatus',e.message,true);}
+  }else{
+    const ok=await submit([row]);if(ok)$('aStaff').value='';
+  }
 }
+function cancelEdit(){EDITING=null;$('saveOneBtn').textContent='เพิ่มข้อมูล';$('cancelEditBtn').style.display='none';}
+function editManage(i){
+  const entry=MANAGE_ROWS[i];if(!entry)return;
+  EDITING=entry;const r=entry.record;
+  $('aYear').value=r.Year;$('aMonth').value=r.Month||0;$('aStaff').value=r['Staff name']||'';
+  $('aProg').value=r.Program||'';$('aType').value=r.Type||'';$('aIdx').value=r.Indexing||'';
+  $('saveOneBtn').textContent='บันทึกการแก้ไข';$('cancelEditBtn').style.display='inline-block';
+  status('addStatus','กำลังแก้ไขรายการแถวที่ '+entry.rowNumber+' — แก้ข้อมูลแล้วกดบันทึกการแก้ไข');
+  $('aYear').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function deleteManage(i){
+  const entry=MANAGE_ROWS[i];if(!entry)return;
+  if(!confirm(`ยืนยันลบข้อมูลของ ${entry.record['Staff name']} ปี ${entry.record.Year} หรือไม่? การลบจะลบจาก Google Sheets จริง`))return;
+  try{await adminRequest({action:'delete',rowNumber:entry.rowNumber,fingerprint:entry.fingerprint});cancelEdit();status('manageStatus','ลบข้อมูลสำเร็จ');await refreshAfterChange();}
+  catch(e){status('manageStatus',e.message,true);}
+}
+async function loadManageRows(){
+  try{
+    if(IS_DEMO)throw Error('ไม่สามารถจัดการข้อมูลตัวอย่างได้');
+    status('manageStatus','กำลังโหลดรายการ...');
+    const j=await adminRequest({action:'list'});MANAGE_ROWS=j.rows||[];
+    renderManageRows();status('manageStatus',`โหลด ${MANAGE_ROWS.length} รายการ`);
+  }catch(e){MANAGE_ROWS=[];renderManageRows();status('manageStatus',e.message,true);}
+}
+function renderManageRows(){
+  const body=$('manageRows');body.replaceChildren();
+  const q=$('manageSearch').value.trim().toLocaleLowerCase();let shown=0;
+  MANAGE_ROWS.forEach((entry,i)=>{
+    const r=entry.record;
+    if(q&&!Object.values(r).some(v=>String(v).toLocaleLowerCase().includes(q)))return;
+    shown++;const tr=document.createElement('tr');
+    [r.Year,r.Month||'-',r['Staff name'],r.Program,r.Type,r.Indexing].forEach(v=>{const td=document.createElement('td');td.textContent=v==null?'':String(v);tr.appendChild(td)});
+    const td=document.createElement('td');td.className='text-nowrap';
+    const edit=document.createElement('button');edit.className='btn btn-outline-primary btn-sm me-1';edit.textContent='แก้ไข';edit.onclick=()=>editManage(i);
+    const del=document.createElement('button');del.className='btn btn-outline-danger btn-sm';del.textContent='ลบ';del.onclick=()=>deleteManage(i);
+    td.append(edit,del);tr.appendChild(td);body.appendChild(tr);
+  });
+  if(!shown){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.textContent='ไม่พบรายการ';tr.appendChild(td);body.appendChild(tr);}
+}
+async function uploadCsv(){
+  const f=$('csvUpload').files[0];if(!f){status('csvStatus','กรุณาเลือกไฟล์ CSV',true);return;}
+  try{
+    status('csvStatus','กำลังตรวจสอบไฟล์...');
+    const text=await f.text();
+    const parsed=Papa.parse(text.replace(/^\uFEFF/,''),{header:true,skipEmptyLines:'greedy',transformHeader:h=>h.trim()});
+    if(parsed.errors.length)throw Error('CSV มีรูปแบบไม่ถูกต้อง (บรรทัด '+(parsed.errors[0].row+2)+')');
+    const headers=parsed.meta.fields||[];
+    if(!COL.year.some(h=>headers.includes(h))||!COL.staff.some(h=>headers.includes(h)))throw Error('CSV ต้องมีคอลัมน์ Year และ Staff name (หรือชื่อภาษาไทย)');
+    const rows=normalize(parsed.data);
+    if(rows.length!==parsed.data.length)throw Error('บางแถวไม่มีปีหรือชื่ออาจารย์ กรุณาตรวจสอบไฟล์');
+    if(rows.some(r=>r.year<1990||r.year>2100))throw Error('ปีใน CSV ต้องอยู่ระหว่าง ค.ศ. 1990–2100');
+    if(!rows.length)throw Error('ไม่พบข้อมูลใน CSV');
+    const existing=new Set(DATA.map(sixKey)), unique=[];let skippedLocal=0;
+    for(const r of rows){const k=sixKey(r);if(existing.has(k)){skippedLocal++;continue;}existing.add(k);unique.push(r);}
+    if(!unique.length){status('csvStatus',`มีข้อมูลอยู่ในระบบแล้วทั้งหมด ${skippedLocal} รายการ ไม่ได้เพิ่มข้อมูล`);return;}
+    if(!confirm(`พบ ${rows.length} รายการ · ซ้ำในข้อมูลที่โหลด ${skippedLocal} รายการ · เตรียมส่ง ${unique.length} รายการไปตรวจสอบกับ Google Sheets และบันทึก ยืนยันหรือไม่?`))return;
+    let added=0,skippedServer=0;
+    for(let i=0;i<unique.length;i+=500){
+      const j=await adminRequest({action:'add',rows:unique.slice(i,i+500).map(canon)});
+      added+=j.added||0;skippedServer+=j.skipped||0;
+    }
+    status('csvStatus',`นำเข้าเสร็จ: เพิ่ม ${added} รายการ · ข้อมูลซ้ำ ${skippedLocal+skippedServer} รายการ (ข้าม)`);
+    await refreshAfterChange();
+  }catch(e){status('csvStatus',e.message,true);}
+}
+
 load();
 </script>
 </body>

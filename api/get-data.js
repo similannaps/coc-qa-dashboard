@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const upstream = await fetch(GOOGLE_SHEET_API_URL, { redirect: "follow" });
+    const upstream = await fetch(GOOGLE_SHEET_API_URL, { redirect: "follow", cache: "no-store" });
     if (!upstream.ok) {
       return res.status(502).json({ error: "Upstream error" });
     }
@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
       "Content-Type",
       upstream.headers.get("content-type") || "text/plain; charset=utf-8"
     );
-    res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+    res.setHeader("Cache-Control", "no-store, max-age=0");
     return res.status(200).send(body);
   } catch (err) {
     console.error("get-data failed");
